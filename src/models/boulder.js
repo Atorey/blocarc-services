@@ -49,7 +49,7 @@ let boulderSchema = new mongoose.Schema({
     },
     mine: {
         type: Boolean,
-        default: false
+        default: true
     }
 });
 

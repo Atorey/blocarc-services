@@ -4,6 +4,11 @@ let Boulder = require(__dirname + '/../models/boulder.js');
 
 let router = express.Router();
 
+let error400 = (res, err) => res.status(400).send({ statusCode: '400', message: err.message, error: 'Bad Request' })
+let error404 = (res, message) => res.status(404).send({ statusCode: '404', message: message, error: 'Not found' });
+let error500 = (res, err) => res.status(500).send({ statusCode: '500', message: err.message, error: 'Internal Server Error' });
+let error403 = (res, message) => res.status(403).send({ statusCode: '403', message: message, error: "Forbidden" });
+
 //TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
 
 router.get('/', (req, res) => {
@@ -14,12 +19,10 @@ router.get('/', (req, res) => {
                     .send({ boulders: result });
             }
             else {
-                res.status(404)
-                    .send({ statusCode: '404', message: 'Boulders not found', error: 'Not found' });
+                error404(res, 'Boulders not found');
             }
         }).catch((err) => {
-            res.status(500)
-                .send({ statusCode: '500', message: err.message, error: 'Internal Server Error' });
+            error500(res, err);
         });
 });
 
@@ -31,12 +34,10 @@ router.get('/:id', (req, res) => {
                     .send({ boulder: result });
             }
             else {
-                res.status(404)
-                    .send({ statusCode: '404', message: 'Boulder not found', error: 'Not found' })
+                error404(res, 'Boulder not found');
             }
         }).catch((err) => {
-            res.status(500)
-                .send({ statusCode: '500', message: err.message, error: 'Internal Server Error' });
+            error404(res, 'Boulder not found');
         });
 });
 
@@ -57,22 +58,36 @@ router.post('/', (req, res) => {
     newBoulder.save()
         .then(result => {
             res.status(200)
-                .send({boulder: result});
+                .send({ boulder: result });
         }).catch(err => {
-            res.status(400)
-                .send({statusCode: '400', message: err.message, error: 'Bad Request'})
+            error400(res, err);
         })
 });
 
-//TODO: Añadir un error 403 si se intenta borrar un evento que no es nuestro
 router.delete('/:id', (req, res) => {
-    Boulder.findByIdAndRemove(req.params['id'])
+    Boulder.findById(req.params['id'])
         .then(result => {
-            res.status(200).send();
-        }).catch(err => {
-            res.status(400)
-                .send({statusCode: '400'})
-        })
-})
+            if (result) {
+                if (result.mine === true) {
+                    Boulder.findByIdAndRemove(req.params['id'])
+                        .then(() => {
+                            res.status(200).send()
+                        }).catch(err => {
+                            error500(res, err);
+                        });
+                }
+                else {
+                    error403(res, 'This is not your boulder');
+                }
+            }
+            else {
+                error404(res, 'Boulder not found');
+            }
+        }).catch(() => {
+            error404(res, 'Boulder not found');
+        });
+});
+
+router.put('')
 
 module.exports = router;
