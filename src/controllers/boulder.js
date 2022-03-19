@@ -90,7 +90,7 @@ const remove = (req, res) => {
 
 const update = (req, res) => {
     Boulder.findById(req.params['id'])
-        .then(result => {
+        .then(async (result) => {
             if (!result) {
                 error404(res, 'Boulder not found');
             }
@@ -98,6 +98,11 @@ const update = (req, res) => {
                 error403(res, 'This is not your boulder');
             }
             else {
+                const imageUrl = await saveImage(
+                    'boulders',
+                    req.body.image
+                );
+
                 Boulder.findByIdAndUpdate(req.params['id'], {
                     $set: {
                         name: req.body.name,
@@ -105,7 +110,7 @@ const update = (req, res) => {
                         wall: req.body.wall,
                         section: req.body.section,
                         share: req.body.share,
-                        image: req.body.image,
+                        image: imageUrl,
                         coordHolds: req.body.coordHolds,
                         creationDate: req.body.creationDate,
                         creator: req.body.creator,
@@ -124,10 +129,42 @@ const update = (req, res) => {
         });
 }
 
+const getComments = (req, res) => {
+    Boulder.findById(req.params['id'])
+        .then(result => {
+            if (result) {
+                res.status(200)
+                    .send({ comments: result.comments });
+            }
+            else {
+                error404(res, 'Boulder not found');
+            }
+        }).catch(() => {
+            error404(res, 'Boulder not found');
+        });
+}
+
+/* const postComment = (req, res) => {
+    Boulder.findById(req.params['id'])
+        .then(result => {
+            if (result) {
+                res.status(200)
+                    .send({ comments: result.comments });
+            }
+            else {
+                error404(res, 'Boulder not found');
+            }
+        }).catch(() => {
+            error404(res, 'Boulder not found');
+        });
+} */
+
 module.exports = {
     findAll,
     findOne,
     create,
     remove,
-    update
+    update,
+    getComments,
+    postComment
 }

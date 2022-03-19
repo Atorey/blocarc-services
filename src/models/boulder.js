@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+let commentSchema = new mongoose.Schema({
+    comment: {
+        type: String,
+        required: true,
+        minlength: 3,
+        maxlength: 250,
+        trim: true
+    },
+    date: {
+        type: Date,
+        default: Date.now
+    },
+    user: {
+        type: String,
+        default: 'Clarke'
+    }
+})
+
 let boulderSchema = new mongoose.Schema({
     name: {
         type: String,
@@ -12,15 +30,15 @@ let boulderSchema = new mongoose.Schema({
     grade: {
         type: String,
         required: true,
-        enum: [ 'V+', '6a', '6a+', '6b', '6b+', '6c', 
-                '6c+', '7a', '7a+', '7b', '7b+', '7c', 
-                '7c+', '8a', '8a+', '8b', '8b+', '8c', 
-                '8c+', '9a', '9a+', '9b', '9b+']
+        enum: ['V+', '6a', '6a+', '6b', '6b+', '6c',
+            '6c+', '7a', '7a+', '7b', '7b+', '7c',
+            '7c+', '8a', '8a+', '8b', '8b+', '8c',
+            '8c+', '9a', '9a+', '9b', '9b+']
     },
     wall: {
         type: String,
         required: true,
-        enum: [ '-10', '0', '10', '20', '30', '40']
+        enum: ['-10', '0', '10', '20', '30', '40']
     },
     section: {
         type: String,
@@ -50,7 +68,8 @@ let boulderSchema = new mongoose.Schema({
     mine: {
         type: Boolean,
         default: true
-    }
+    },
+    comments: [commentSchema]
 });
 
 let Boulder = mongoose.model('boulders', boulderSchema);
