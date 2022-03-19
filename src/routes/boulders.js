@@ -10,6 +10,6 @@ router.delete('/:id', boulderController.remove);
 router.put('/:id', boulderController.update);
 
 router.get('/:id/comments', boulderController.getComments);
-router.get('/:id/comments', boulderController.postComment);
+router.post('/:id/comments', boulderController.postComment);
 
 module.exports = router;

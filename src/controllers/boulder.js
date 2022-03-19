@@ -6,7 +6,7 @@ const saveImage = require('../utils/uploadImage')
 
 //TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
 
-const findAll = (req, res) => {
+const findAll = (res) => {
     Boulder.find()
         .then(result => {
             if (result && result.length > 0) {
@@ -103,7 +103,7 @@ const update = (req, res) => {
                     req.body.image
                 );
 
-                Boulder.findByIdAndUpdate(req.params['id'], {
+                Boulder.findByIdAndUpdate(result.id, {
                     $set: {
                         name: req.body.name,
                         grade: req.body.grade,
@@ -144,12 +144,21 @@ const getComments = (req, res) => {
         });
 }
 
-/* const postComment = (req, res) => {
+const postComment = (req, res) => {
     Boulder.findById(req.params['id'])
         .then(result => {
             if (result) {
-                res.status(200)
-                    .send({ comments: result.comments });
+                Boulder.findByIdAndUpdate(result.id, {
+                    $push: {
+                        comments: [{ "comment": req.body.comment }]
+                    }
+                }, { new: true })
+                    .then(result => {
+                        res.status(200)
+                            .send(result.comments[result.comments.length - 1]);
+                    }).catch((err) => {
+                        error400(res, err);
+                    })
             }
             else {
                 error404(res, 'Boulder not found');
@@ -157,7 +166,7 @@ const getComments = (req, res) => {
         }).catch(() => {
             error404(res, 'Boulder not found');
         });
-} */
+}
 
 module.exports = {
     findAll,
