@@ -68,8 +68,8 @@ const remove = (req, res) => {
     Boulder.findById(req.params['id'])
         .then(result => {
             if (result) {
-                if (result.mine === true) {
-                    Boulder.findByIdAndRemove(req.params['id'])
+                if (result.mine) {
+                    Boulder.deleteOne({ _id: result.id })
                         .then(() => {
                             res.status(200).send()
                         }).catch(err => {
@@ -89,12 +89,40 @@ const remove = (req, res) => {
 };
 
 const update = (req, res) => {
-    Boulder.findByIdAndUpdate(req.params['id'], {
-        $set: {
-
-        }
-    })
-};
+    Boulder.findById(req.params['id'])
+        .then(result => {
+            if (!result) {
+                error404(res, 'Boulder not found');
+            }
+            else if (result && !result.mine) {
+                error403(res, 'This is not your boulder');
+            }
+            else {
+                Boulder.findByIdAndUpdate(req.params['id'], {
+                    $set: {
+                        name: req.body.name,
+                        grade: req.body.grade,
+                        wall: req.body.wall,
+                        section: req.body.section,
+                        share: req.body.share,
+                        image: req.body.image,
+                        coordHolds: req.body.coordHolds,
+                        creationDate: req.body.creationDate,
+                        creator: req.body.creator,
+                        mine: req.body.mine
+                    }
+                }, { new: true })
+                    .then(result => {
+                        res.status(200)
+                            .send({ boulder: result });
+                    }).catch((err) => {
+                        error400(res, err);
+                    })
+            }
+        }).catch(() => {
+            error404(res, 'Boulder not found');
+        });
+}
 
 module.exports = {
     findAll,
