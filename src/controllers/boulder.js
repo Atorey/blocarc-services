@@ -6,7 +6,7 @@ const saveImage = require('../utils/uploadImage')
 
 //TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
 
-const findAll = (res) => {
+const findAll = (req, res) => {
     Boulder.find()
         .then(result => {
             if (result && result.length > 0) {
@@ -168,6 +168,38 @@ const postComment = (req, res) => {
         });
 }
 
+const deleteComment = (req, res) => {
+    Boulder.findById(req.params['id'])
+        .then(result => {
+            if (!result) {
+                error404(res, 'Boulder not found');
+            }
+            //TODO: añadir a la condición si el usuario actual no es el autor del comentario. Por ejemplo: result.mine || result.comment.user === loguedUser
+            else if (!result.mine) {
+                error403(res, 'You are not authorized to delete this comment');
+            }
+            else {
+                if (result.comments.some(comment => comment.id === req.params['comment'])) {
+                    Boulder.updateOne(result.id, {
+                        $pull: {
+                            comments: { _id: req.params['comment'] }
+                        }
+                    }, { new: true })
+                        .then(() => {
+                            res.status(200).send();
+                        }).catch((err) => {
+                            error400(res, err);
+                        })
+                }
+                else {
+                    error404(res, 'Comment not found');
+                }
+            }
+        }).catch(() => {
+            error404(res, 'Boulder not found');
+        });
+}
+
 module.exports = {
     findAll,
     findOne,
@@ -175,5 +207,6 @@ module.exports = {
     remove,
     update,
     getComments,
-    postComment
+    postComment,
+    deleteComment
 }
