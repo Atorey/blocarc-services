@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
 let wallSchema = new mongoose.Schema({
   name: {
@@ -17,10 +17,10 @@ let wallSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-});
+})
 
-wallSchema.index({ name: 1, section: 1 }, { unique: true });
+wallSchema.index({ name: 1, section: 1 }, { unique: true })
 
-let Wall = mongoose.model("walls", wallSchema);
+let Wall = mongoose.model('walls', wallSchema)
 
-module.exports = Wall;
+module.exports = Wall

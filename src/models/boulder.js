@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose')
 
 let commentSchema = new mongoose.Schema({
   comment: {
@@ -14,9 +14,9 @@ let commentSchema = new mongoose.Schema({
   },
   user: {
     type: String,
-    default: "Clarke",
+    default: 'Clarke',
   },
-});
+})
 
 let holdSchema = new mongoose.Schema({
   coords: {
@@ -25,10 +25,10 @@ let holdSchema = new mongoose.Schema({
   },
   color: {
     type: String,
-    enum: ["green", "blue", "red"],
+    enum: ['green', 'blue', 'red'],
     required: true,
   },
-});
+})
 
 let boulderSchema = new mongoose.Schema({
   name: {
@@ -43,29 +43,29 @@ let boulderSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      "V+",
-      "6a",
-      "6a+",
-      "6b",
-      "6b+",
-      "6c",
-      "6c+",
-      "7a",
-      "7a+",
-      "7b",
-      "7b+",
-      "7c",
-      "7c+",
-      "8a",
-      "8a+",
-      "8b",
-      "8b+",
-      "8c",
-      "8c+",
-      "9a",
-      "9a+",
-      "9b",
-      "9b+",
+      'V+',
+      '6a',
+      '6a+',
+      '6b',
+      '6b+',
+      '6c',
+      '6c+',
+      '7a',
+      '7a+',
+      '7b',
+      '7b+',
+      '7c',
+      '7c+',
+      '8a',
+      '8a+',
+      '8b',
+      '8b+',
+      '8c',
+      '8c+',
+      '9a',
+      '9a+',
+      '9b',
+      '9b+',
     ],
   },
   wall: {
@@ -86,7 +86,7 @@ let boulderSchema = new mongoose.Schema({
   },
   creator: {
     type: String,
-    default: "Clarke",
+    default: 'Clarke',
   },
   mine: {
     type: Boolean,
@@ -94,8 +94,8 @@ let boulderSchema = new mongoose.Schema({
   },
   holds: [holdSchema],
   comments: [commentSchema],
-});
+})
 
-let Boulder = mongoose.model("boulders", boulderSchema);
+let Boulder = mongoose.model('boulders', boulderSchema)
 
-module.exports = Boulder;
+module.exports = Boulder
