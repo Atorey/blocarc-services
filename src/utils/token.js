@@ -1,12 +1,12 @@
 const jwt = require('jsonwebtoken')
 const secret = 'secret'
-const { error401 } = require('../utils/errors')
+/* const { error401 } = require('../utils/errors') */
 
 const generate = login => {
   return jwt.sign({ login: login }, secret, { expiresIn: '1 hours' })
 }
 
-const validate = token => {
+/* const validate = token => {
   try {
     let resultado = jwt.verify(token, secret)
     return resultado
@@ -30,10 +30,8 @@ let protectRoute = () => {
       error401(res, 'Not Authorized')
     }
   }
-}
+} */
 
 module.exports = {
   generate,
-  validate,
-  protectRoute,
 }

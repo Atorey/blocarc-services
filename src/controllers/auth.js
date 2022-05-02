@@ -2,6 +2,7 @@ const User = require('../models/user.js')
 const { error400, error401, error500 } = require('../utils/errors')
 const Token = require('../utils/token')
 const sha256 = require('crypto-js/sha256')
+const jwt = require('jsonwebtoken')
 
 const login = (req, res) => {
   User.find({
@@ -42,9 +43,31 @@ const register = (req, res) => {
   }
 }
 
+const secret = 'secret'
+const validate = (req, res) => {
+  let token = req.headers['authorization']
+  if (token) {
+    token = token.substring(7)
+    let result
+    try {
+      result = jwt.verify(token, secret)
+    } catch (e) {
+      console.error('Token could not be validated')
+    }
+    if (result) {
+      res.status(204).send()
+    } else {
+      error401(res, 'Not Authorized')
+    }
+  } else {
+    error401(res, 'Not Authorized')
+  }
+}
+
 module.exports = {
   login,
   /* facebook,
     google, */
   register,
+  validate,
 }
