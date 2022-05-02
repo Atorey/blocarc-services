@@ -13,6 +13,13 @@ mongoose.connect('mongodb://localhost:27017/blocarc', {
 
 let app = express()
 
+// Add headers before the routes are defined
+app.use(function (req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+  next()
+})
 app.use(express.json({ limit: '50mb' }))
 app.use(express.static('public'))
 app.use('/boulders', boulders)
