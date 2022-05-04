@@ -6,6 +6,8 @@ const generate = login => {
   return jwt.sign({ login: login }, secret, { expiresIn: '1 hours' })
 }
 
+const decode = token => jwt.decode(token)
+
 /* const validate = token => {
   try {
     let resultado = jwt.verify(token, secret)
@@ -34,4 +36,5 @@ let protectRoute = () => {
 
 module.exports = {
   generate,
+  decode
 }

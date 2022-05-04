@@ -85,8 +85,8 @@ let boulderSchema = new mongoose.Schema({
     default: Date.now,
   },
   creator: {
-    type: String,
-    default: 'Clarke',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'users'
   },
   mine: {
     type: Boolean,

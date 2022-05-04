@@ -1,6 +1,8 @@
 const fs = require('fs')
+const jwt = require('jsonwebtoken')
 
 const Boulder = require('../models/boulder.js')
+const User = require('../models/user.js')
 const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
 
@@ -10,7 +12,13 @@ const saveImage = require('../utils/uploadImage')
 const findAll = (req, res) => {
   Boulder.find()
     .then(result => {
+      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result && result.length > 0) {
+        result.forEach(boulder => {
+          if (boulder.creator === userLoged) {
+            boulder.mine = true
+          }
+        })
         res.status(200).send({ boulders: result })
       } else {
         error404(res, 'Boulders not found')
@@ -37,26 +45,40 @@ const findOne = (req, res) => {
 
 const create = async (req, res) => {
   const imageUrl = await saveImage('boulders', req.body.image)
-  const newBoulder = new Boulder({
-    name: req.body.name,
-    grade: req.body.grade,
-    wall: req.body.wall,
-    share: req.body.share,
-    image: imageUrl,
-    creationDate: req.body.creationDate,
-    creator: req.body.creator,
-    mine: req.body.mine,
-    holds: req.body.holds,
-  })
-
-  newBoulder
-    .save()
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
     .then(result => {
-      res.status(200).send({ boulder: result })
+      console.log(result)
+      if (result) {
+        let creator = result
+
+        const newBoulder = new Boulder({
+          name: req.body.name,
+          grade: req.body.grade,
+          wall: req.body.wall,
+          share: req.body.share,
+          image: imageUrl,
+          creationDate: req.body.creationDate,
+          creator: creator,
+          mine: req.body.mine,
+          holds: req.body.holds,
+        })
+
+        newBoulder
+          .save()
+          .then(result => {
+            res.status(200).send({ boulder: result })
+          })
+          .catch(err => {
+            fs.unlinkSync('./public/' + imageUrl)
+            error400(res, err)
+          })
+      } else {
+        error404(res, 'User not found')
+      }
     })
-    .catch(err => {
-      fs.unlinkSync('./public/' + imageUrl)
-      error400(res, err)
+    .catch(() => {
+      error404(res, 'User not found')
     })
 }
 
@@ -85,42 +107,56 @@ const remove = (req, res) => {
 }
 
 const update = (req, res) => {
-  Boulder.findById(req.params['id'])
-    .then(async result => {
-      if (!result) {
-        error404(res, 'Boulder not found')
-      } else if (result && !result.mine) {
-        error403(res, 'This is not your boulder')
-      } else {
-        const imageUrl = await saveImage('boulders', req.body.image)
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      console.log(result)
+      if (result) {
+        let creator = result
 
-        Boulder.findByIdAndUpdate(
-          result.id,
-          {
-            $set: {
-              name: req.body.name,
-              grade: req.body.grade,
-              wall: req.body.wall,
-              share: req.body.share,
-              image: imageUrl,
-              creationDate: req.body.creationDate,
-              creator: req.body.creator,
-              mine: req.body.mine,
-              holds: req.body.holds,
-            },
-          },
-          { new: true }
-        )
-          .then(result => {
-            res.status(200).send({ boulder: result })
+        Boulder.findById(req.params['id'])
+          .then(async result => {
+            if (!result) {
+              error404(res, 'Boulder not found')
+            } else if (result && !result.mine) {
+              error403(res, 'This is not your boulder')
+            } else {
+              const imageUrl = await saveImage('boulders', req.body.image)
+
+              Boulder.findByIdAndUpdate(
+                result.id,
+                {
+                  $set: {
+                    name: req.body.name,
+                    grade: req.body.grade,
+                    wall: req.body.wall,
+                    share: req.body.share,
+                    image: imageUrl,
+                    creationDate: req.body.creationDate,
+                    creator: creator,
+                    mine: req.body.mine,
+                    holds: req.body.holds,
+                  },
+                },
+                { new: true }
+              )
+                .then(result => {
+                  res.status(200).send({ boulder: result })
+                })
+                .catch(err => {
+                  error400(res, err)
+                })
+            }
           })
-          .catch(err => {
-            error400(res, err)
+          .catch(() => {
+            error404(res, 'Boulder not found')
           })
+      } else {
+        error404(res, 'User not found')
       }
     })
     .catch(() => {
-      error404(res, 'Boulder not found')
+      error404(res, 'User not found')
     })
 }
 
