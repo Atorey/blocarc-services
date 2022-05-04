@@ -10,7 +10,7 @@ const saveImage = require('../utils/uploadImage')
 //TODO: Crear servicio GET /boulders?creator={id} para obetener los bloques de un creador
 
 const findAll = (req, res) => {
-  Boulder.find()
+  Boulder.find().populate('creator')
     .then(result => {
       const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result && result.length > 0) {
