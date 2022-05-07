@@ -26,7 +26,7 @@ const register = (req, res) => {
   if (regex.test(req.body.password)) {
     const newUser = new User({
       email: req.body.email,
-      username: req.body.username,
+      username: '@' + req.body.username,
       password: sha256(req.body.password),
     })
 
