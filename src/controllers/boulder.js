@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken')
 
 const Boulder = require('../models/boulder.js')
 const User = require('../models/user.js')
+const Achievement = require('../models/achievement.js')
+
 const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
 
@@ -10,7 +12,8 @@ const saveImage = require('../utils/uploadImage')
 //TODO: Crear servicio GET /boulders?creator={id} para obetener los bloques de un creador
 
 const findAll = (req, res) => {
-  Boulder.find().populate('creator')
+  Boulder.find()
+    .populate('creator')
     .then(result => {
       const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result && result.length > 0) {
@@ -160,6 +163,51 @@ const update = (req, res) => {
     })
 }
 
+const postAchievement = async (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        let userLoged = result
+
+        Boulder.findById(req.params['id'])
+          .then(result => {
+            if (result) {
+              const newAchievement = new Achievement({
+                user: userLoged,
+                boulder: result,
+                date: req.body.date,
+                attemps: req.body.attemps,
+                grade: req.body.grade,
+                comment: req.body.comment,
+                video: req.body.video,
+                valoration: req.body.valoration,
+              })
+
+              newAchievement
+                .save()
+                .then(result => {
+                  res.status(200).send({ achievement: result })
+                })
+                .catch(err => {
+                  error400(res, err)
+                })
+            } else {
+              error404(res, 'Boulder not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 const getComments = (req, res) => {
   Boulder.findById(req.params['id'])
     .then(result => {
@@ -257,6 +305,7 @@ module.exports = {
   create,
   remove,
   update,
+  postAchievement,
   getComments,
   postComment,
   deleteComment,

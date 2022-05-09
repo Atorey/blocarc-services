@@ -1,23 +1,5 @@
 const mongoose = require('mongoose')
 
-let commentSchema = new mongoose.Schema({
-  comment: {
-    type: String,
-    required: true,
-    minlength: 3,
-    maxlength: 250,
-    trim: true,
-  },
-  date: {
-    type: Date,
-    default: Date.now,
-  },
-  user: {
-    type: String,
-    default: 'Clarke',
-  },
-})
-
 let holdSchema = new mongoose.Schema({
   coords: {
     type: String,
@@ -43,7 +25,10 @@ let boulderSchema = new mongoose.Schema({
     type: String,
     required: true,
     enum: [
-      'V+',
+      '4',
+      '4+',
+      '5',
+      '5+',
       '6a',
       '6a+',
       '6b',
@@ -86,14 +71,13 @@ let boulderSchema = new mongoose.Schema({
   },
   creator: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'users'
+    ref: 'users',
   },
   mine: {
     type: Boolean,
     default: true,
   },
   holds: [holdSchema],
-  comments: [commentSchema],
 })
 
 let Boulder = mongoose.model('boulders', boulderSchema)
