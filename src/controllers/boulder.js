@@ -188,6 +188,7 @@ const postAchievement = async (req, res) => {
                 .save()
                 .then(result => {
                   res.status(200).send({ achievement: result })
+                  updateBoulderValoration(result.boulder)
                 })
                 .catch(err => {
                   error400(res, err)
@@ -206,6 +207,26 @@ const postAchievement = async (req, res) => {
     .catch(() => {
       error404(res, 'User not found')
     })
+}
+
+const updateBoulderValoration = boulder => {
+  Achievement.find({ boulder: boulder }).then(result => {
+    let valorationSum = 0
+    result.forEach(achievement => {
+      valorationSum = valorationSum + achievement.valoration
+    })
+    let newValoration = valorationSum / result.length
+
+    Boulder.findByIdAndUpdate(
+      boulder.id,
+      {
+        $set: {
+          valoration: newValoration,
+        },
+      },
+      { new: true }
+    )
+  })
 }
 
 const getComments = (req, res) => {
