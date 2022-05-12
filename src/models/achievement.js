@@ -15,6 +15,7 @@ let achievementSchema = new mongoose.Schema({
   },
   attemps: {
     type: Number,
+    min: 1,
     required: true,
   },
   grade: {
@@ -58,7 +59,7 @@ let achievementSchema = new mongoose.Schema({
   valoration: {
     type: Number,
     min: 1,
-    max: 5
+    max: 5,
   },
 })
 
