@@ -10,6 +10,7 @@ router.post('/', boulderController.create)
 router.delete('/:id', boulderController.remove)
 router.put('/:id', boulderController.update)
 
+router.get('/:id/achievements', boulderController.getAchievements)
 router.post('/:id/achievements', boulderController.postAchievement)
 
 router.get('/:id/comments', boulderController.getComments)

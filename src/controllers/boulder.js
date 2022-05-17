@@ -34,6 +34,7 @@ const findAll = (req, res) => {
 
 const findOne = (req, res) => {
   Boulder.findById(req.params['id'])
+    .populate('creator')
     .then(result => {
       if (result) {
         res.status(200).send({ boulder: result })
@@ -160,6 +161,21 @@ const update = (req, res) => {
     })
     .catch(() => {
       error404(res, 'User not found')
+    })
+}
+
+const getAchievements = (req, res) => {
+  Achievement.find({ boulder: req.params['id'] })
+    .then(result => {
+      console.log(result)
+      if (result) {
+        res.status(200).send({ achievements: result })
+      } else {
+        error404(res, 'Achievements not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'Achievements not found')
     })
 }
 
@@ -326,6 +342,7 @@ module.exports = {
   create,
   remove,
   update,
+  getAchievements,
   postAchievement,
   getComments,
   postComment,
