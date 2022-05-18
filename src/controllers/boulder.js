@@ -12,24 +12,44 @@ const saveImage = require('../utils/uploadImage')
 //TODO: Crear servicio GET /boulders?creator={id} para obetener los bloques de un creador
 
 const findAll = (req, res) => {
-  Boulder.find()
-    .populate('creator')
-    .then(result => {
-      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-      if (result && result.length > 0) {
-        result.forEach(boulder => {
-          if (boulder.creator === userLoged) {
-            boulder.mine = true
-          }
-        })
-        res.status(200).send({ boulders: result })
-      } else {
-        error404(res, 'Boulders not found')
-      }
-    })
-    .catch(err => {
-      error500(res, err)
-    })
+  if (req.query.creator) {
+    Boulder.find({ creator: req.query.creator })
+      .then(result => {
+        const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+        if (result && result.length > 0) {
+          result.forEach(boulder => {
+            if (boulder.creator === userLoged) {
+              boulder.mine = true
+            }
+          })
+          res.status(200).send({ boulders: result })
+        } else {
+          error404(res, 'Boulders not found')
+        }
+      })
+      .catch(err => {
+        error500(res, err)
+      })
+  } else {
+    Boulder.find()
+      .populate('creator')
+      .then(result => {
+        const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+        if (result && result.length > 0) {
+          result.forEach(boulder => {
+            if (boulder.creator === userLoged) {
+              boulder.mine = true
+            }
+          })
+          res.status(200).send({ boulders: result })
+        } else {
+          error404(res, 'Boulders not found')
+        }
+      })
+      .catch(err => {
+        error500(res, err)
+      })
+  }
 }
 
 const findOne = (req, res) => {
