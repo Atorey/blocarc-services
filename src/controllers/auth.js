@@ -28,6 +28,7 @@ const register = (req, res) => {
       email: req.body.email,
       username: '@' + req.body.username,
       password: sha256(req.body.password),
+      avatar: 'img/users/default-avatar.jpg'
     })
 
     newUser
