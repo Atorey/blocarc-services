@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
 const boulders = require(__dirname + '/routes/boulders')
 const walls = require(__dirname + '/routes/walls')
 const auth = require(__dirname + '/routes/auth')
+const users = require(__dirname + '/routes/users')
 
 mongoose.connect('mongodb://localhost:27017/blocarc', {
   useNewUrlParser: true,
@@ -28,6 +29,7 @@ app.use(express.static('public'))
 app.use('/boulders', boulders)
 app.use('/walls', walls)
 app.use('/auth', auth)
+app.use('/users', users)
 app.use('/img/boulders', express.static('./public/img/boulders'))
 
 app.listen(8080)
