@@ -9,11 +9,12 @@ const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
 
 //TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
-//TODO: Crear servicio GET /boulders?creator={id} para obetener los bloques de un creador
 
 const findAll = (req, res) => {
   if (req.query.creator) {
     Boulder.find({ creator: req.query.creator })
+      .sort({ creationDate: -1 })
+      .populate('creator')
       .then(result => {
         const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
         if (result && result.length > 0) {
@@ -32,6 +33,7 @@ const findAll = (req, res) => {
       })
   } else {
     Boulder.find()
+      .sort({ creationDate: -1 })
       .populate('creator')
       .then(result => {
         const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
@@ -50,6 +52,49 @@ const findAll = (req, res) => {
         error500(res, err)
       })
   }
+}
+
+const findAllAchievements = (req, res) => {
+  Boulder.find({ creator: req.query.creator })
+    .sort({ creationDate: -1 })
+    .populate('creator')
+    .then(result => {
+      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+      if (result && result.length > 0) {
+        Achievement.find()
+          .populate('boulder')
+          .then(achievements => {
+            if (achievements && achievements.length > 0) {
+              console.log(achievements)
+              console.log(result)
+
+              let filteredBoulders = result.filter(boulder => {
+                return achievements.some(achievement => {
+                  return boulder.id === achievement.boulder.id
+                })
+              })
+              console.log(filteredBoulders)
+
+              filteredBoulders.forEach(boulder => {
+                if (boulder.creator === userLoged) {
+                  boulder.mine = true
+                }
+              })
+              res.status(200).send({ boulders: filteredBoulders })
+            } else {
+              error404(res, 'Boulders not found')
+            }
+          })
+          .catch(err => {
+            error500(res, err)
+          })
+      } else {
+        error404(res, 'Boulders not found')
+      }
+    })
+    .catch(err => {
+      error500(res, err)
+    })
 }
 
 const findOne = (req, res) => {
@@ -358,6 +403,7 @@ const getGrades = (req, res) => {
 
 module.exports = {
   findAll,
+  findAllAchievements,
   findOne,
   create,
   remove,

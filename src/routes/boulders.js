@@ -4,6 +4,7 @@ const router = express.Router()
 const boulderController = require('../controllers/boulder')
 
 router.get('/', boulderController.findAll)
+router.get('/achievements', boulderController.findAllAchievements)
 router.get('/grades', boulderController.getGrades)
 router.get('/:id', boulderController.findOne)
 router.post('/', boulderController.create)
