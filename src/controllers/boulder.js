@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken')
 const Boulder = require('../models/boulder.js')
 const User = require('../models/user.js')
 const Achievement = require('../models/achievement.js')
+const Like = require('../models/like.js')
 
 const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
@@ -127,6 +128,48 @@ const findAllBouldersMarks = (req, res) => {
                     res.status(200).send({ boulders: filteredBoulders })
                   } else {
                     error404(res, 'Boulders saved not found')
+                  }
+                })
+                .catch(err => {
+                  error500(res, err)
+                })
+            } else {
+              error404(res, 'User not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'User not found')
+          })
+      } else {
+        error404(res, 'Boulders not found')
+      }
+    })
+    .catch(err => {
+      error500(res, err)
+    })
+}
+const findAllLikes = (req, res) => {
+  Boulder.find()
+    .sort({ creationDate: -1 })
+    .populate('creator')
+    .then(result => {
+      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+      if (result && result.length > 0) {
+        User.findOne({ email: userLoged })
+          .then(user => {
+            if (user) {
+              Like.find({ user: user })
+                .populate('boulder')
+                .then(likes => {
+                  if (likes && likes.length > 0) {
+                    let filteredBoulders = result.filter(boulder => {
+                      return likes.some(like => {
+                        return boulder.id === like.boulder.id
+                      })
+                    })
+                    res.status(200).send({ boulders: filteredBoulders })
+                  } else {
+                    error404(res, 'Boulders liked not found')
                   }
                 })
                 .catch(err => {
@@ -380,6 +423,45 @@ const postBoulderMark = async (req, res) => {
     })
 }
 
+const postLike = async (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        let userLoged = result
+
+        Boulder.findById(req.params['id'])
+          .then(result => {
+            if (result) {
+              const newLike = new Like({
+                user: userLoged,
+                boulder: result,
+              })
+
+              newLike
+                .save()
+                .then(result => {
+                  res.status(200).send({ like: result })
+                })
+                .catch(err => {
+                  error400(res, err)
+                })
+            } else {
+              error404(res, 'Boulder not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 const updateBoulderValoration = boulder => {
   Achievement.find({ boulder: boulder }).then(result => {
     let valorationSum = 0
@@ -495,6 +577,7 @@ module.exports = {
   findAll,
   findAllAchievements,
   findAllBouldersMarks,
+  findAllLikes,
   findOne,
   create,
   remove,
@@ -502,6 +585,7 @@ module.exports = {
   getAchievements,
   postAchievement,
   postBoulderMark,
+  postLike,
   getComments,
   postComment,
   deleteComment,
