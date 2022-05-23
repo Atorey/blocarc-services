@@ -7,6 +7,7 @@ const Achievement = require('../models/achievement.js')
 
 const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
+const BoulderMark = require('../models/bouldermark.js')
 
 //TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
 
@@ -55,38 +56,88 @@ const findAll = (req, res) => {
 }
 
 const findAllAchievements = (req, res) => {
-  Boulder.find({ creator: req.query.creator })
+  Boulder.find()
     .sort({ creationDate: -1 })
     .populate('creator')
     .then(result => {
       const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result && result.length > 0) {
-        Achievement.find()
-          .populate('boulder')
-          .then(achievements => {
-            if (achievements && achievements.length > 0) {
-              console.log(achievements)
-              console.log(result)
+        User.findOne({ email: userLoged })
+          .then(user => {
+            if (user) {
+              Achievement.find({ user: user })
+                .populate('boulder')
+                .then(achievements => {
+                  if (achievements && achievements.length > 0) {
+                    let filteredBoulders = result.filter(boulder => {
+                      return achievements.some(achievement => {
+                        return boulder.id === achievement.boulder.id
+                      })
+                    })
+                    console.log(filteredBoulders)
 
-              let filteredBoulders = result.filter(boulder => {
-                return achievements.some(achievement => {
-                  return boulder.id === achievement.boulder.id
+                    filteredBoulders.forEach(boulder => {
+                      if (boulder.creator === userLoged) {
+                        boulder.mine = true
+                      }
+                    })
+                    res.status(200).send({ boulders: filteredBoulders })
+                  } else {
+                    error404(res, 'Boulders completed not found')
+                  }
                 })
-              })
-              console.log(filteredBoulders)
-
-              filteredBoulders.forEach(boulder => {
-                if (boulder.creator === userLoged) {
-                  boulder.mine = true
-                }
-              })
-              res.status(200).send({ boulders: filteredBoulders })
+                .catch(err => {
+                  error500(res, err)
+                })
             } else {
-              error404(res, 'Boulders not found')
+              error404(res, 'User not found')
             }
           })
-          .catch(err => {
-            error500(res, err)
+          .catch(() => {
+            error404(res, 'User not found')
+          })
+      } else {
+        error404(res, 'Boulders not found')
+      }
+    })
+    .catch(err => {
+      error500(res, err)
+    })
+}
+
+const findAllBouldersMarks = (req, res) => {
+  Boulder.find()
+    .sort({ creationDate: -1 })
+    .populate('creator')
+    .then(result => {
+      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+      if (result && result.length > 0) {
+        User.findOne({ email: userLoged })
+          .then(user => {
+            if (user) {
+              BoulderMark.find({ user: user })
+                .populate('boulder')
+                .then(bouldersmarks => {
+                  if (bouldersmarks && bouldersmarks.length > 0) {
+                    let filteredBoulders = result.filter(boulder => {
+                      return bouldersmarks.some(bouldermark => {
+                        return boulder.id === bouldermark.boulder.id
+                      })
+                    })
+                    res.status(200).send({ boulders: filteredBoulders })
+                  } else {
+                    error404(res, 'Boulders saved not found')
+                  }
+                })
+                .catch(err => {
+                  error500(res, err)
+                })
+            } else {
+              error404(res, 'User not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'User not found')
           })
       } else {
         error404(res, 'Boulders not found')
@@ -290,6 +341,45 @@ const postAchievement = async (req, res) => {
     })
 }
 
+const postBoulderMark = async (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        let userLoged = result
+
+        Boulder.findById(req.params['id'])
+          .then(result => {
+            if (result) {
+              const newBoulderMark = new BoulderMark({
+                user: userLoged,
+                boulder: result,
+              })
+
+              newBoulderMark
+                .save()
+                .then(result => {
+                  res.status(200).send({ boulderMark: result })
+                })
+                .catch(err => {
+                  error400(res, err)
+                })
+            } else {
+              error404(res, 'Boulder not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 const updateBoulderValoration = boulder => {
   Achievement.find({ boulder: boulder }).then(result => {
     let valorationSum = 0
@@ -404,12 +494,14 @@ const getGrades = (req, res) => {
 module.exports = {
   findAll,
   findAllAchievements,
+  findAllBouldersMarks,
   findOne,
   create,
   remove,
   update,
   getAchievements,
   postAchievement,
+  postBoulderMark,
   getComments,
   postComment,
   deleteComment,
