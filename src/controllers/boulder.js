@@ -1,17 +1,14 @@
 const fs = require('fs')
 const jwt = require('jsonwebtoken')
-const mongoose = require('mongoose')
 
 const Boulder = require('../models/boulder.js')
 const User = require('../models/user.js')
 const Achievement = require('../models/achievement.js')
 const Like = require('../models/like.js')
+const BoulderMark = require('../models/bouldermark.js')
 
 const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
-const BoulderMark = require('../models/bouldermark.js')
-
-//TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
 
 const findAll = (req, res) => {
   if (req.query.creator) {
@@ -21,14 +18,19 @@ const findAll = (req, res) => {
       .then(result => {
         const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
         if (result && result.length > 0) {
-          result.forEach(boulder => {
-            if (boulder.creator.email === userLoged.email) {
-              boulder.mine = true
-            } else {
-              boulder.mine = false
+          User.findOne({ user: userLoged }).then(userFind => {
+            if (userFind) {
+              Like.find({ user: userFind }).then(likes => {
+                if (likes) {
+                  result.forEach(boulder => {
+                    boulder.mine = checkIfItsMine(boulder, userLoged)
+                    boulder.like = checkIfLike(likes, boulder)
+                  })
+                }
+                res.status(200).send({ boulders: result })
+              })
             }
           })
-          res.status(200).send({ boulders: result })
         } else {
           error404(res, 'Boulders not found')
         }
@@ -66,20 +68,62 @@ const findAll = (req, res) => {
   }
 }
 
-const checkIfItsMine = (boulder, userLoged) => {
-  if (boulder.creator.email === userLoged) {
-    return true
-  } else {
-    return false
+const findOne = (req, res) => {
+  Boulder.findById(req.params['id'])
+    .populate('creator')
+    .then(result => {
+      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+      if (result) {
+        User.findOne({ user: userLoged }).then(userFind => {
+          if (userFind) {
+            Like.find({ user: userFind }).then(likes => {
+              Achievement.find({ user: userFind }).then(achievements => {
+                if (likes) {
+                  result.mine = checkIfItsMine(result, userLoged)
+                  result.like = checkIfLike(likes, result)
+                  result.completed = checkIfCompleted(achievements, result)
+                }
+                res.status(200).send({ boulder: result })
+              })
+            })
+          } else {
+            error404(res, 'User not found')
+          }
+        })
+      } else {
+        error404(res, 'Boulder not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'Boulr not found')
+    })
+}
+
+const getGrades = (req, res) => {
+  try {
+    let grades = Boulder.schema.path('grade').enumValues
+    if (grades) {
+      res.status(200).send({ grades: grades })
+    } else {
+      error404(res, 'Grades not found')
+    }
+  } catch (error) {
+    error404(res, 'Grades not found')
   }
 }
 
-const checkIfLike = (likes, boulder) => {
-  if (likes.filter(like => like.boulder.toString() === boulder.id).length > 0) {
-    return true
-  } else {
-    return false
-  }
+const getAchievements = (req, res) => {
+  Achievement.find({ boulder: req.params['id'] })
+    .then(result => {
+      if (result) {
+        res.status(200).send({ achievements: result })
+      } else {
+        error404(res, 'Achievements not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'Achievements not found')
+    })
 }
 
 const findAllAchievements = (req, res) => {
@@ -172,6 +216,7 @@ const findAllBouldersMarks = (req, res) => {
       error500(res, err)
     })
 }
+
 const findAllLikes = (req, res) => {
   Boulder.find()
     .sort({ creationDate: -1 })
@@ -215,21 +260,6 @@ const findAllLikes = (req, res) => {
     })
 }
 
-const findOne = (req, res) => {
-  Boulder.findById(req.params['id'])
-    .populate('creator')
-    .then(result => {
-      if (result) {
-        res.status(200).send({ boulder: result })
-      } else {
-        error404(res, 'Boulder not found')
-      }
-    })
-    .catch(() => {
-      error404(res, 'Boulder not found')
-    })
-}
-
 const create = async (req, res) => {
   const imageUrl = await saveImage('boulders', req.body.image)
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
@@ -268,97 +298,6 @@ const create = async (req, res) => {
     })
 }
 
-const remove = (req, res) => {
-  Boulder.findById(req.params['id'])
-    .then(result => {
-      if (result) {
-        if (result.mine) {
-          Boulder.deleteOne({ _id: result.id })
-            .then(() => {
-              res.status(200).send()
-            })
-            .catch(err => {
-              error500(res, err)
-            })
-        } else {
-          error403(res, 'This is not your boulder')
-        }
-      } else {
-        error404(res, 'Boulder not found')
-      }
-    })
-    .catch(() => {
-      error404(res, 'Boulder not found')
-    })
-}
-
-const update = (req, res) => {
-  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-  User.findOne({ email: userLoged })
-    .then(result => {
-      if (result) {
-        let creator = result
-
-        Boulder.findById(req.params['id'])
-          .then(async result => {
-            if (!result) {
-              error404(res, 'Boulder not found')
-            } else if (result && !result.mine) {
-              error403(res, 'This is not your boulder')
-            } else {
-              const imageUrl = await saveImage('boulders', req.body.image)
-
-              Boulder.findByIdAndUpdate(
-                result.id,
-                {
-                  $set: {
-                    name: req.body.name,
-                    grade: req.body.grade,
-                    wall: req.body.wall,
-                    share: req.body.share,
-                    image: imageUrl,
-                    creationDate: req.body.creationDate,
-                    creator: creator,
-                    mine: req.body.mine,
-                    holds: req.body.holds,
-                  },
-                },
-                { new: true }
-              )
-                .then(result => {
-                  res.status(200).send({ boulder: result })
-                })
-                .catch(err => {
-                  error400(res, err)
-                })
-            }
-          })
-          .catch(() => {
-            error404(res, 'Boulder not found')
-          })
-      } else {
-        error404(res, 'User not found')
-      }
-    })
-    .catch(() => {
-      error404(res, 'User not found')
-    })
-}
-
-const getAchievements = (req, res) => {
-  Achievement.find({ boulder: req.params['id'] })
-    .then(result => {
-      if (result) {
-        res.status(200).send({ achievements: result })
-      } else {
-        error404(res, 'Achievements not found')
-      }
-    })
-    .catch(() => {
-      error404(res, 'Achievements not found')
-    })
-}
-
 const postAchievement = async (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
@@ -384,7 +323,7 @@ const postAchievement = async (req, res) => {
                 .save()
                 .then(result => {
                   res.status(200).send({ achievement: result })
-                  updateBoulderValoration(result.boulder)
+                  updateBoulderValoration(result.boulder, 1)
                 })
                 .catch(err => {
                   error400(res, err)
@@ -483,7 +422,171 @@ const postLike = async (req, res) => {
     })
 }
 
-const updateBoulderValoration = boulder => {
+const update = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        let creator = result
+
+        Boulder.findById(req.params['id'])
+          .then(async result => {
+            if (!result) {
+              error404(res, 'Boulder not found')
+            } else if (result && !result.mine) {
+              error403(res, 'This is not your boulder')
+            } else {
+              const imageUrl = await saveImage('boulders', req.body.image)
+
+              Boulder.findByIdAndUpdate(
+                result.id,
+                {
+                  $set: {
+                    name: req.body.name,
+                    grade: req.body.grade,
+                    wall: req.body.wall,
+                    share: req.body.share,
+                    image: imageUrl,
+                    creationDate: req.body.creationDate,
+                    creator: creator,
+                    mine: req.body.mine,
+                    holds: req.body.holds,
+                  },
+                },
+                { new: true }
+              )
+                .then(result => {
+                  res.status(200).send({ boulder: result })
+                })
+                .catch(err => {
+                  error400(res, err)
+                })
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
+const removeLike = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(user => {
+      if (user) {
+        Boulder.findById(req.params['id'])
+          .then(result => {
+            if (result) {
+              Like.deleteOne({ boulder: result, user: user })
+                .then(() => {
+                  res.status(200).send()
+                })
+                .catch(err => {
+                  error500(res, err)
+                })
+            } else {
+              error404(res, 'Boulder not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
+const removeAchievement = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(user => {
+      if (user) {
+        Boulder.findById(req.params['id'])
+          .then(result => {
+            if (result) {
+              Achievement.deleteOne({ boulder: result, user: user })
+                .then(() => {
+                  updateBoulderValoration(result, -1)
+                  res.status(200).send()
+                })
+                .catch(err => {
+                  error500(res, err)
+                })
+            } else {
+              error404(res, 'Boulder not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
+const remove = (req, res) => {
+  Boulder.findById(req.params['id'])
+    .then(result => {
+      if (result) {
+        if (result.mine) {
+          Boulder.deleteOne({ _id: result.id })
+            .then(() => {
+              res.status(200).send()
+            })
+            .catch(err => {
+              error500(res, err)
+            })
+        } else {
+          error403(res, 'This is not your boulder')
+        }
+      } else {
+        error404(res, 'Boulder not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'Boulder not found')
+    })
+}
+
+const checkIfItsMine = (boulder, userLoged) => {
+  if (boulder.creator.email === userLoged) {
+    return true
+  } else {
+    return false
+  }
+}
+
+const checkIfLike = (likes, boulder) => {
+  if (likes.filter(like => like.boulder.toString() === boulder.id).length > 0) {
+    return true
+  } else {
+    return false
+  }
+}
+
+const checkIfCompleted = (achievements, boulder) => {
+  if (achievements.filter(achievement => achievement.boulder.toString() === boulder.id).length > 0) {
+    return true
+  } else {
+    return false
+  }
+}
+
+const updateBoulderValoration = (boulder, numReps) => {
   Achievement.find({ boulder: boulder }).then(result => {
     let valorationSum = 0
     result.forEach(achievement => {
@@ -493,7 +596,7 @@ const updateBoulderValoration = boulder => {
     Boulder.findOneAndUpdate(
       { _id: boulder.id },
       {
-        $inc: { reps: 1 },
+        $inc: { reps: numReps },
         $set: {
           valoration: newValoration,
         },
@@ -502,19 +605,6 @@ const updateBoulderValoration = boulder => {
     ).exec()
   })
 }
-
-/* 
-const updateBoulderReps = boulder => {
-  Boulder.findByIdAndUpdate(
-    boulder.id,
-    {
-      $inc: {
-        reps: 1,
-      },
-    },
-    { new: true }
-  )
-} */
 
 const getComments = (req, res) => {
   Boulder.findById(req.params['id'])
@@ -594,34 +684,23 @@ const deleteComment = (req, res) => {
     })
 }
 
-const getGrades = (req, res) => {
-  try {
-    let grades = Boulder.schema.path('grade').enumValues
-    if (grades) {
-      res.status(200).send({ grades: grades })
-    } else {
-      error404(res, 'Grades not found')
-    }
-  } catch (error) {
-    error404(res, 'Grades not found')
-  }
-}
-
 module.exports = {
   findAll,
+  findOne,
+  getGrades,
+  getAchievements,
   findAllAchievements,
   findAllBouldersMarks,
   findAllLikes,
-  findOne,
   create,
-  remove,
-  update,
-  getAchievements,
   postAchievement,
   postBoulderMark,
   postLike,
+  update,
+  remove,
+  removeLike,
+  removeAchievement,
   getComments,
   postComment,
   deleteComment,
-  getGrades,
 }

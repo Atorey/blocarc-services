@@ -16,8 +16,11 @@ router.post('/:id/achievements', boulderController.postAchievement)
 router.post('/:id/save', boulderController.postBoulderMark)
 router.post('/:id/like', boulderController.postLike)
 
-router.delete('/:id', boulderController.remove)
 router.put('/:id', boulderController.update)
+
+router.delete('/:id/like', boulderController.removeLike)
+router.delete('/:id/achievement', boulderController.removeAchievement)
+router.delete('/:id', boulderController.remove)
 
 router.get('/:id/comments', boulderController.getComments)
 router.post('/:id/comments', boulderController.postComment)

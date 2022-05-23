@@ -81,6 +81,10 @@ let boulderSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  completed: {
+    type: Boolean,
+    default: false,
+  },
   valoration: {
     type: Number
   },
