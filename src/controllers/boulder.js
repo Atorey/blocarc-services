@@ -1,5 +1,6 @@
 const fs = require('fs')
 const jwt = require('jsonwebtoken')
+const mongoose = require('mongoose')
 
 const Boulder = require('../models/boulder.js')
 const User = require('../models/user.js')
@@ -21,8 +22,10 @@ const findAll = (req, res) => {
         const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
         if (result && result.length > 0) {
           result.forEach(boulder => {
-            if (boulder.creator === userLoged) {
+            if (boulder.creator.email === userLoged.email) {
               boulder.mine = true
+            } else {
+              boulder.mine = false
             }
           })
           res.status(200).send({ boulders: result })
@@ -40,12 +43,19 @@ const findAll = (req, res) => {
       .then(result => {
         const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
         if (result && result.length > 0) {
-          result.forEach(boulder => {
-            if (boulder.creator === userLoged) {
-              boulder.mine = true
+          User.findOne({ user: userLoged }).then(userFind => {
+            if (userFind) {
+              Like.find({ user: userFind }).then(likes => {
+                if (likes) {
+                  result.forEach(boulder => {
+                    boulder.mine = checkIfItsMine(boulder, userLoged)
+                    boulder.like = checkIfLike(likes, boulder)
+                  })
+                }
+                res.status(200).send({ boulders: result })
+              })
             }
           })
-          res.status(200).send({ boulders: result })
         } else {
           error404(res, 'Boulders not found')
         }
@@ -53,6 +63,22 @@ const findAll = (req, res) => {
       .catch(err => {
         error500(res, err)
       })
+  }
+}
+
+const checkIfItsMine = (boulder, userLoged) => {
+  if (boulder.creator.email === userLoged) {
+    return true
+  } else {
+    return false
+  }
+}
+
+const checkIfLike = (likes, boulder) => {
+  if (likes.filter(like => like.boulder.toString() === boulder.id).length > 0) {
+    return true
+  } else {
+    return false
   }
 }
 
@@ -75,8 +101,6 @@ const findAllAchievements = (req, res) => {
                         return boulder.id === achievement.boulder.id
                       })
                     })
-                    console.log(filteredBoulders)
-
                     filteredBoulders.forEach(boulder => {
                       if (boulder.creator === userLoged) {
                         boulder.mine = true
@@ -211,7 +235,6 @@ const create = async (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
     .then(result => {
-      console.log(result)
       if (result) {
         let creator = result
 
@@ -273,7 +296,6 @@ const update = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
     .then(result => {
-      console.log(result)
       if (result) {
         let creator = result
 
@@ -326,7 +348,6 @@ const update = (req, res) => {
 const getAchievements = (req, res) => {
   Achievement.find({ boulder: req.params['id'] })
     .then(result => {
-      console.log(result)
       if (result) {
         res.status(200).send({ achievements: result })
       } else {
@@ -469,7 +490,6 @@ const updateBoulderValoration = boulder => {
       valorationSum = valorationSum + achievement.valoration
     })
     let newValoration = valorationSum / result.length
-    console.log(newValoration)
     Boulder.findOneAndUpdate(
       { _id: boulder.id },
       {
