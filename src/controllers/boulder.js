@@ -469,18 +469,32 @@ const updateBoulderValoration = boulder => {
       valorationSum = valorationSum + achievement.valoration
     })
     let newValoration = valorationSum / result.length
-
-    Boulder.findByIdAndUpdate(
-      boulder.id,
+    console.log(newValoration)
+    Boulder.findOneAndUpdate(
+      { _id: boulder.id },
       {
+        $inc: { reps: 1 },
         $set: {
           valoration: newValoration,
         },
       },
-      { new: true }
-    )
+      { upsert: true }
+    ).exec()
   })
 }
+
+/* 
+const updateBoulderReps = boulder => {
+  Boulder.findByIdAndUpdate(
+    boulder.id,
+    {
+      $inc: {
+        reps: 1,
+      },
+    },
+    { new: true }
+  )
+} */
 
 const getComments = (req, res) => {
   Boulder.findById(req.params['id'])

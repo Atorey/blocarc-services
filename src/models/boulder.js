@@ -78,10 +78,13 @@ let boulderSchema = new mongoose.Schema({
     default: true,
   },
   valoration: {
-    type: Number,
-    default: 0
+    type: Number
   },
   holds: [holdSchema],
+  reps: {
+    type: Number,
+    default: 0,
+  },
 })
 
 let Boulder = mongoose.model('boulders', boulderSchema)
