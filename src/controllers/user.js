@@ -12,6 +12,7 @@ const findMe = (req, res) => {
   User.findOne({ email: userLoged })
     .then(result => {
       if (result) {
+        result.me = true
         res.status(200).send({ user: result })
       } else {
         error404(res, 'User not found')
@@ -26,6 +27,7 @@ const findOne = (req, res) => {
   User.findById(req.params['id'])
     .then(result => {
       if (result) {
+        result.me = false
         res.status(200).send({ user: result })
       } else {
         error404(res, 'User not found')

@@ -11,26 +11,14 @@ const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
 
 const findAll = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   if (req.query.creator) {
     Boulder.find({ creator: req.query.creator })
       .sort({ creationDate: -1 })
       .populate('creator')
       .then(result => {
-        const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
         if (result && result.length > 0) {
-          User.findOne({ user: userLoged }).then(userFind => {
-            if (userFind) {
-              Like.find({ user: userFind }).then(likes => {
-                if (likes) {
-                  result.forEach(boulder => {
-                    boulder.mine = checkIfItsMine(boulder, userLoged)
-                    boulder.like = checkIfLike(likes, boulder)
-                  })
-                }
-                res.status(200).send({ boulders: result })
-              })
-            }
-          })
+          res.status(200).send({ boulders: result })
         } else {
           error404(res, 'Boulders not found')
         }
@@ -43,21 +31,9 @@ const findAll = (req, res) => {
       .sort({ creationDate: -1 })
       .populate('creator')
       .then(result => {
-        const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
         if (result && result.length > 0) {
-          User.findOne({ user: userLoged }).then(userFind => {
-            if (userFind) {
-              Like.find({ user: userFind }).then(likes => {
-                if (likes) {
-                  result.forEach(boulder => {
-                    boulder.mine = checkIfItsMine(boulder, userLoged)
-                    boulder.like = checkIfLike(likes, boulder)
-                  })
-                }
-                res.status(200).send({ boulders: result })
-              })
-            }
-          })
+          result = result.filter(boulder => boulder.share || boulder.creator.email === userLoged)
+          res.status(200).send({ boulders: result })
         } else {
           error404(res, 'Boulders not found')
         }
@@ -73,19 +49,24 @@ const findOne = (req, res) => {
     .populate('creator')
     .then(result => {
       const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-      if (result) {
+      if (!result) {
+        error404(res, 'Boulder not found')
+      } else {
         User.findOne({ user: userLoged }).then(userFind => {
           if (userFind) {
             Like.find({ user: userFind }).then(likes => {
               Achievement.find({ user: userFind }).then(achievements => {
                 BoulderMark.find({ user: userFind }).then(boulderMarks => {
-                  if (likes) {
-                    result.mine = checkIfItsMine(result, userLoged)
-                    result.like = checkIfLike(likes, result)
-                    result.completed = checkIfCompleted(achievements, result)
-                    result.saved = checkIfSaved(boulderMarks, result)
+                  result.mine = checkIfItsMine(result, userLoged)
+                  result.like = checkIfLike(likes, result)
+                  result.completed = checkIfCompleted(achievements, result)
+                  result.saved = checkIfSaved(boulderMarks, result)
+
+                  if (result && !result.share && !result.mine) {
+                    error403(res, 'This boulder is not being shared to the community')
+                  } else {
+                    res.status(200).send({ boulder: result })
                   }
-                  res.status(200).send({ boulder: result })
                 })
               })
             })
@@ -93,8 +74,6 @@ const findOne = (req, res) => {
             error404(res, 'User not found')
           }
         })
-      } else {
-        error404(res, 'Boulder not found')
       }
     })
     .catch(() => {
@@ -313,7 +292,12 @@ const postAchievement = async (req, res) => {
 
         Boulder.findById(req.params['id'])
           .then(result => {
-            if (result) {
+            if (!result) {
+              error404(res, 'Boulder not found')
+            }
+            if (result && !result.share && !result.mine) {
+              error403(res, 'You cant complete this boulder')
+            } else {
               const newAchievement = new Achievement({
                 user: userLoged,
                 boulder: result,
@@ -334,8 +318,6 @@ const postAchievement = async (req, res) => {
                 .catch(err => {
                   error400(res, err)
                 })
-            } else {
-              error404(res, 'Boulder not found')
             }
           })
           .catch(() => {
@@ -359,7 +341,12 @@ const postBoulderMark = async (req, res) => {
 
         Boulder.findById(req.params['id'])
           .then(result => {
-            if (result) {
+            if (!result) {
+              error404(res, 'Boulder not found')
+            }
+            if (result && !result.share && !result.mine) {
+              error403(res, 'You cant save this boulder')
+            } else {
               const newBoulderMark = new BoulderMark({
                 user: userLoged,
                 boulder: result,
@@ -373,8 +360,6 @@ const postBoulderMark = async (req, res) => {
                 .catch(err => {
                   error400(res, err)
                 })
-            } else {
-              error404(res, 'Boulder not found')
             }
           })
           .catch(() => {
@@ -398,7 +383,12 @@ const postLike = async (req, res) => {
 
         Boulder.findById(req.params['id'])
           .then(result => {
-            if (result) {
+            if (!result) {
+              error404(res, 'Boulder not found')
+            }
+            if (result && !result.share && !result.mine) {
+              error403(res, 'You cant like this boulder')
+            } else {
               const newLike = new Like({
                 user: userLoged,
                 boulder: result,
@@ -412,8 +402,6 @@ const postLike = async (req, res) => {
                 .catch(err => {
                   error400(res, err)
                 })
-            } else {
-              error404(res, 'Boulder not found')
             }
           })
           .catch(() => {
@@ -429,55 +417,34 @@ const postLike = async (req, res) => {
 }
 
 const update = (req, res) => {
-  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-  User.findOne({ email: userLoged })
-    .then(result => {
-      if (result) {
-        let creator = result
-
-        Boulder.findById(req.params['id'])
-          .then(async result => {
-            if (!result) {
-              error404(res, 'Boulder not found')
-            } else if (result && !result.mine) {
-              error403(res, 'This is not your boulder')
-            } else {
-              const imageUrl = await saveImage('boulders', req.body.image)
-
-              Boulder.findByIdAndUpdate(
-                result.id,
-                {
-                  $set: {
-                    name: req.body.name,
-                    grade: req.body.grade,
-                    wall: req.body.wall,
-                    share: req.body.share,
-                    image: imageUrl,
-                    creationDate: req.body.creationDate,
-                    creator: creator,
-                    mine: req.body.mine,
-                    holds: req.body.holds,
-                  },
-                },
-                { new: true }
-              )
-                .then(result => {
-                  res.status(200).send({ boulder: result })
-                })
-                .catch(err => {
-                  error400(res, err)
-                })
-            }
-          })
-          .catch(() => {
-            error404(res, 'Boulder not found')
-          })
+  Boulder.findById(req.params['id'])
+    .then(async result => {
+      if (!result) {
+        error404(res, 'Boulder not found')
+      } else if (result && !result.mine) {
+        error403(res, 'This is not your boulder')
       } else {
-        error404(res, 'User not found')
+        Boulder.findByIdAndUpdate(
+          result.id,
+          {
+            $set: {
+              name: req.body.name,
+              grade: req.body.grade,
+              share: req.body.share,
+            },
+          },
+          { new: true }
+        )
+          .then(result => {
+            res.status(200).send({ boulder: result })
+          })
+          .catch(err => {
+            error400(res, err)
+          })
       }
     })
     .catch(() => {
-      error404(res, 'User not found')
+      error404(res, 'Boulder not found')
     })
 }
 
@@ -542,6 +509,7 @@ const removeBoulderMark = (req, res) => {
       error404(res, 'User not found')
     })
 }
+
 const removeAchievement = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
@@ -575,17 +543,22 @@ const removeAchievement = (req, res) => {
 }
 
 const remove = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   Boulder.findById(req.params['id'])
     .then(result => {
       if (result) {
-        if (result.mine) {
-          Boulder.deleteOne({ _id: result.id })
-            .then(() => {
-              res.status(200).send()
-            })
-            .catch(err => {
-              error500(res, err)
-            })
+        if ((result.creator.email = userLoged)) {
+          if (!result.share) {
+            Boulder.deleteOne({ _id: result.id })
+              .then(() => {
+                res.status(200).send()
+              })
+              .catch(err => {
+                error500(res, err)
+              })
+          } else {
+            error403(res, 'You cannot delete a boulder that is being shared with the community')
+          }
         } else {
           error403(res, 'This is not your boulder')
         }
