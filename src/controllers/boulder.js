@@ -78,12 +78,15 @@ const findOne = (req, res) => {
           if (userFind) {
             Like.find({ user: userFind }).then(likes => {
               Achievement.find({ user: userFind }).then(achievements => {
-                if (likes) {
-                  result.mine = checkIfItsMine(result, userLoged)
-                  result.like = checkIfLike(likes, result)
-                  result.completed = checkIfCompleted(achievements, result)
-                }
-                res.status(200).send({ boulder: result })
+                BoulderMark.find({ user: userFind }).then(boulderMarks => {
+                  if (likes) {
+                    result.mine = checkIfItsMine(result, userLoged)
+                    result.like = checkIfLike(likes, result)
+                    result.completed = checkIfCompleted(achievements, result)
+                    result.saved = checkIfSaved(boulderMarks, result)
+                  }
+                  res.status(200).send({ boulder: result })
+                })
               })
             })
           } else {
@@ -95,7 +98,7 @@ const findOne = (req, res) => {
       }
     })
     .catch(() => {
-      error404(res, 'Boulr not found')
+      error404(res, 'Boulder not found')
     })
 }
 
@@ -114,6 +117,8 @@ const getGrades = (req, res) => {
 
 const getAchievements = (req, res) => {
   Achievement.find({ boulder: req.params['id'] })
+    .populate('boulder')
+    .populate('user')
     .then(result => {
       if (result) {
         res.status(200).send({ achievements: result })
@@ -138,6 +143,7 @@ const findAllAchievements = (req, res) => {
             if (user) {
               Achievement.find({ user: user })
                 .populate('boulder')
+                .populate('user')
                 .then(achievements => {
                   if (achievements && achievements.length > 0) {
                     let filteredBoulders = result.filter(boulder => {
@@ -506,6 +512,36 @@ const removeLike = (req, res) => {
     })
 }
 
+const removeBoulderMark = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(user => {
+      if (user) {
+        Boulder.findById(req.params['id'])
+          .then(result => {
+            if (result) {
+              BoulderMark.deleteOne({ boulder: result, user: user })
+                .then(() => {
+                  res.status(200).send()
+                })
+                .catch(err => {
+                  error500(res, err)
+                })
+            } else {
+              error404(res, 'Boulder not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Boulder not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
 const removeAchievement = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
@@ -580,6 +616,14 @@ const checkIfLike = (likes, boulder) => {
 
 const checkIfCompleted = (achievements, boulder) => {
   if (achievements.filter(achievement => achievement.boulder.toString() === boulder.id).length > 0) {
+    return true
+  } else {
+    return false
+  }
+}
+
+const checkIfSaved = (boulderMarks, boulder) => {
+  if (boulderMarks.filter(boulderMark => boulderMark.boulder.toString() === boulder.id).length > 0) {
     return true
   } else {
     return false
@@ -700,6 +744,7 @@ module.exports = {
   remove,
   removeLike,
   removeAchievement,
+  removeBoulderMark,
   getComments,
   postComment,
   deleteComment,

@@ -20,6 +20,7 @@ router.put('/:id', boulderController.update)
 
 router.delete('/:id/like', boulderController.removeLike)
 router.delete('/:id/achievement', boulderController.removeAchievement)
+router.delete('/:id/save', boulderController.removeBoulderMark)
 router.delete('/:id', boulderController.remove)
 
 router.get('/:id/comments', boulderController.getComments)
