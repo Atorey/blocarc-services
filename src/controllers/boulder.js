@@ -11,7 +11,6 @@ const { error400, error403, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
 
 const findAll = (req, res) => {
-  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   if (req.query.creator) {
     Boulder.find({ creator: req.query.creator })
       .sort({ creationDate: -1 })
@@ -31,6 +30,8 @@ const findAll = (req, res) => {
       .sort({ creationDate: -1 })
       .populate('creator')
       .then(result => {
+        const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+
         if (result && result.length > 0) {
           result = result.filter(boulder => boulder.share || boulder.creator.email === userLoged)
           res.status(200).send({ boulders: result })
@@ -164,8 +165,9 @@ const findAllBouldersMarks = (req, res) => {
     .sort({ creationDate: -1 })
     .populate('creator')
     .then(result => {
-      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result && result.length > 0) {
+        const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+
         User.findOne({ email: userLoged })
           .then(user => {
             if (user) {
@@ -175,6 +177,8 @@ const findAllBouldersMarks = (req, res) => {
                   if (bouldersmarks && bouldersmarks.length > 0) {
                     let filteredBoulders = result.filter(boulder => {
                       return bouldersmarks.some(bouldermark => {
+                        console.log(bouldermark.boulder.id)
+                        console.log(boulder.id)
                         return boulder.id === bouldermark.boulder.id
                       })
                     })
@@ -543,9 +547,9 @@ const removeAchievement = (req, res) => {
 }
 
 const remove = (req, res) => {
-  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   Boulder.findById(req.params['id'])
     .then(result => {
+      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result) {
         if ((result.creator.email = userLoged)) {
           if (!result.share) {
