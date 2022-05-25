@@ -1,5 +1,24 @@
 const mongoose = require('mongoose')
 
+let timerSchema = new mongoose.Schema({
+  preparationTime: {
+    type: String,
+    default: '00:00',
+  },
+  workTime: {
+    type: String,
+    default: '00:00',
+  },
+  restTime: {
+    type: String,
+    default: '00:00',
+  },
+  rounds: {
+    type: String,
+    default: 0,
+  },
+})
+
 let userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -22,6 +41,10 @@ let userSchema = new mongoose.Schema({
   me: {
     type: Boolean,
     default: false,
+  },
+  timer: {
+    type: timerSchema,
+    default: () => ({}),
   },
 })
 
