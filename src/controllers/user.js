@@ -40,6 +40,7 @@ const findOne = (req, res) => {
 
 const getTimer = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  console.log(userLoged)
   User.findOne({ email: userLoged })
     .then(result => {
       if (result) {
