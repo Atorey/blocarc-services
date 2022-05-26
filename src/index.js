@@ -8,7 +8,7 @@ const walls = require(__dirname + '/routes/walls')
 const auth = require(__dirname + '/routes/auth')
 const users = require(__dirname + '/routes/users')
 
-mongoose.connect('mongodb://localhost:27017/blocarc', {
+mongoose.connect('mongodb://mongo:EaPVlxFywgNt6BFLBL5f@containers-us-west-54.railway.app:5621', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
