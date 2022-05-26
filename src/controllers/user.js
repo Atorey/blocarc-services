@@ -85,9 +85,58 @@ const postTimer = (req, res) => {
     })
 }
 
+const getPullUps = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  console.log(userLoged)
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        res.status(200).send({ pullUp: result.pullUp })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
+const postPullUps = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        User.findByIdAndUpdate(
+          result.id,
+          {
+            $set: {
+              pullUp: req.body.pullUp,
+            },
+          },
+          { new: true }
+        )
+          .then(result => {
+            if (result) {
+              res.status(200).send()
+            } else {
+              error404(res, 'User not found')
+            }
+          })
+          .catch(err => error400(res, err))
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 module.exports = {
   findMe,
   findOne,
   getTimer,
   postTimer,
+  getPullUps,
+  postPullUps,
 }

@@ -5,8 +5,10 @@ const userController = require('../controllers/user')
 
 router.get('/me', userController.findMe)
 router.get('/timer', userController.getTimer)
+router.get('/pull-ups', userController.getPullUps)
 router.get('/:id', userController.findOne)
 
 router.put('/timer', userController.postTimer)
+router.put('/pull-ups', userController.postPullUps)
 
 module.exports = router

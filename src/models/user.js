@@ -19,6 +19,25 @@ let timerSchema = new mongoose.Schema({
   },
 })
 
+let pullUpSchema = new mongoose.Schema({
+  reps: {
+    type: Number,
+    default: 0,
+  },
+  intensity: {
+    type: Number,
+    default: 0,
+  },
+  weight: {
+    type: Number,
+    default: 0,
+  },
+  ballast: {
+    type: String,
+    default: 0,
+  },
+})
+
 let userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -44,6 +63,10 @@ let userSchema = new mongoose.Schema({
   },
   timer: {
     type: timerSchema,
+    default: () => ({}),
+  },
+  pullUps: {
+    type: pullUpSchema,
     default: () => ({}),
   },
 })
