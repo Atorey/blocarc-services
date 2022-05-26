@@ -32,4 +32,5 @@ app.use('/auth', auth)
 app.use('/users', users)
 app.use('/img/boulders', express.static('./public/img/boulders'))
 
-app.listen(8080)
+const PORT = 5000
+app.listen(process.env.PORT || PORT, () => console.log('run server ' + PORT))
