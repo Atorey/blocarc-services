@@ -118,6 +118,7 @@ const getGoal = (req, res) => {
 
 const postPullUps = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  console.log(userLoged)
   User.findOne({ email: userLoged })
     .then(result => {
       if (result) {
@@ -135,16 +136,16 @@ const postPullUps = (req, res) => {
             if (result) {
               res.status(200).send()
             } else {
-              error404(res, 'User not found')
+              error404(res, '1')
             }
           })
           .catch(err => error400(res, err))
       } else {
-        error404(res, 'User not found')
+        error404(res, '2')
       }
     })
     .catch(() => {
-      error404(res, 'User not found')
+      error404(res, '3')
     })
 }
 
