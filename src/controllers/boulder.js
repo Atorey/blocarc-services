@@ -177,8 +177,6 @@ const findAllBouldersMarks = (req, res) => {
                   if (bouldersmarks && bouldersmarks.length > 0) {
                     let filteredBoulders = result.filter(boulder => {
                       return bouldersmarks.some(bouldermark => {
-                        console.log(bouldermark.boulder.id)
-                        console.log(boulder.id)
                         return boulder.id === bouldermark.boulder.id
                       })
                     })

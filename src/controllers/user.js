@@ -40,7 +40,6 @@ const findOne = (req, res) => {
 
 const getTimer = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-  console.log(userLoged)
   User.findOne({ email: userLoged })
     .then(result => {
       if (result) {
@@ -87,11 +86,10 @@ const postTimer = (req, res) => {
 
 const getPullUps = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-  console.log(userLoged)
   User.findOne({ email: userLoged })
     .then(result => {
       if (result) {
-        res.status(200).send({ pullUp: result.pullUp })
+        res.status(200).send({ pullUps: result.pullUps })
       } else {
         error404(res, 'User not found')
       }
@@ -118,7 +116,6 @@ const getGoal = (req, res) => {
 
 const postPullUps = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
-  console.log(userLoged)
   User.findOne({ email: userLoged })
     .then(result => {
       if (result) {
@@ -126,26 +123,25 @@ const postPullUps = (req, res) => {
           result.id,
           {
             $set: {
-              pullUp: req.body.pullUp,
+              pullUps: req.body.pullUps,
             },
           },
-          { upsert: true },
           { new: true }
         )
           .then(result => {
             if (result) {
               res.status(200).send()
             } else {
-              error404(res, '1')
+              error404(res, 'User not found')
             }
           })
           .catch(err => error400(res, err))
       } else {
-        error404(res, '2')
+        error404(res, 'User not found')
       }
     })
     .catch(() => {
-      error404(res, '3')
+      error404(res, 'User not found')
     })
 }
 

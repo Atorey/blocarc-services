@@ -8,7 +8,6 @@ const saveImage = (dir, image) => {
     const filePath = path.join('public/img', dir, file)
     fs.writeFile(filePath, data, { encoding: 'base64' }, err => {
       if (err) {
-        console.log('llega')
         reject(err)
       }
       resolve(`img/${dir}/${file}`)

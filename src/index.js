@@ -13,6 +13,8 @@ mongoose.connect('mongodb+srv://atorey:Jk15wpoaq9c@cluster0.qxnl4.mongodb.net/te
   useUnifiedTopology: true,
 })
 
+/* mongoose.connect('mongodb://localhost:27017/blocarc', { useNewUrlParser: true }) */
+
 let app = express()
 
 // Add headers before the routes are defined
@@ -34,3 +36,4 @@ app.use('/img/boulders', express.static('./public/img/boulders'))
 
 const PORT = 5000
 app.listen(process.env.PORT || PORT, () => console.log('run server ' + PORT))
+/* app.listen(PORT) */
