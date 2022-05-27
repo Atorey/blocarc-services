@@ -101,6 +101,21 @@ const getPullUps = (req, res) => {
     })
 }
 
+const getGoal = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        res.status(200).send({ goal: result.goal })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 const postPullUps = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
@@ -113,6 +128,7 @@ const postPullUps = (req, res) => {
               pullUp: req.body.pullUp,
             },
           },
+          { upsert: true },
           { new: true }
         )
           .then(result => {
@@ -136,6 +152,7 @@ module.exports = {
   findMe,
   findOne,
   getTimer,
+  getGoal,
   postTimer,
   getPullUps,
   postPullUps,

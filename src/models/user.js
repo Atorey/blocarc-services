@@ -69,6 +69,9 @@ let userSchema = new mongoose.Schema({
     type: pullUpSchema,
     default: () => ({}),
   },
+  goal: {
+    type: Number,
+  },
 })
 
 let User = mongoose.model('users', userSchema)
