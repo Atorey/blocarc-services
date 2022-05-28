@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken')
 
 const User = require('../models/user.js')
+const Achievement = require('../models/achievement.js')
 
 const { error404, error400 } = require('../utils/errors')
 
@@ -29,6 +30,47 @@ const findOne = (req, res) => {
       if (result) {
         result.me = false
         res.status(200).send({ user: result })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
+const getAchievements = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        let firstDate = new Date(req.query.dateFirst)
+        firstDate.setDate(firstDate.getDate())
+        firstDate = new Date(firstDate.setHours(23, 59, 59, 9999))
+
+        let lastDate = new Date(req.query.dateLast)
+        lastDate.setDate(lastDate.getDate())
+        lastDate = new Date(lastDate.setHours(23, 59, 59, 9999))
+
+        Achievement.find({
+          user: result,
+          date: {
+            $gte: new Date(firstDate),
+            $lte: new Date(lastDate),
+          },
+        })
+          .populate('boulder')
+          .populate('user')
+          .then(result => {
+            if (result) {
+              res.status(200).send({ achievements: result })
+            } else {
+              error404(res, 'Achievements not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Achievements not found')
+          })
       } else {
         error404(res, 'User not found')
       }
@@ -148,6 +190,7 @@ const postPullUps = (req, res) => {
 module.exports = {
   findMe,
   findOne,
+  getAchievements,
   getTimer,
   getGoal,
   postTimer,

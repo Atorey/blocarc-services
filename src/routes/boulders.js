@@ -5,7 +5,7 @@ const boulderController = require('../controllers/boulder')
 
 router.get('/', boulderController.findAll)
 router.get('/grades', boulderController.getGrades)
-router.get('/achievements', boulderController.findAllAchievements)
+router.get('/achieved', boulderController.findAllBouldersAchieved)
 router.get('/saved', boulderController.findAllBouldersMarks)
 router.get('/like', boulderController.findAllLikes)
 router.get('/:id', boulderController.findOne)
