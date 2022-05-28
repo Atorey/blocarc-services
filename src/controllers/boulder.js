@@ -122,9 +122,20 @@ const findAllAchievements = (req, res) => {
           User.findOne({ email: userLoged })
             .then(user => {
               if (user) {
+                let firstDate = new Date(req.query.dateFirst)
+                firstDate.setDate(firstDate.getDate())
+                firstDate = new Date(firstDate.setHours(23, 59, 59, 9999))
+
+                let lastDate = new Date(req.query.dateLast)
+                lastDate.setDate(lastDate.getDate())
+                lastDate = new Date(lastDate.setHours(23, 59, 59, 9999))
+
                 Achievement.find({
                   user: user,
-                  date: { $gte: new Date(req.query.dateFirst), $lte: new Date(req.query.dateLast) },
+                  date: {
+                    $gte: new Date(firstDate),
+                    $lte: new Date(lastDate),
+                  },
                 })
                   .populate('boulder')
                   .populate('user')
@@ -168,7 +179,6 @@ const findAllAchievements = (req, res) => {
       .populate('creator')
       .then(result => {
         if (result && result.length > 0) {
-          console.log(req.query.user)
           User.findById(req.query.user)
             .then(user => {
               if (user) {
@@ -176,7 +186,6 @@ const findAllAchievements = (req, res) => {
                   .populate('boulder')
                   .populate('user')
                   .then(achievements => {
-                    console.log(achievements)
                     if (achievements && achievements.length > 0) {
                       let filteredBoulders = result.filter(boulder => {
                         return achievements.some(achievement => {
