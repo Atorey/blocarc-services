@@ -13,8 +13,8 @@ mongoose.connect('mongodb+srv://atorey:Jk15wpoaq9c@cluster0.qxnl4.mongodb.net/te
   useUnifiedTopology: true,
 })
 
-/* mongoose.connect('mongodb://localhost:27017/blocarc', { useNewUrlParser: true }) */
-
+/* mongoose.connect('mongodb://localhost:27017/blocarc', { useNewUrlParser: true })
+ */
 let app = express()
 
 app.use(cors())

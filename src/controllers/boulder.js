@@ -53,7 +53,7 @@ const findOne = (req, res) => {
       if (!result) {
         error404(res, 'Boulder not found')
       } else {
-        User.findOne({ user: userLoged }).then(userFind => {
+        User.findOne({ email: userLoged }).then(userFind => {
           if (userFind) {
             Like.find({ user: userFind }).then(likes => {
               Achievement.find({ user: userFind }).then(achievements => {
@@ -578,9 +578,6 @@ const checkIfItsMine = (boulder, userLoged) => {
 }
 
 const checkIfLike = (likes, boulder, user) => {
-  console.log(likes)
-  console.log(boulder.id)
-  console.log(user.id)
   if (likes.filter(like => like.boulder.toString() === boulder.id && like.user.toString() === user.id).length > 0) {
     return true
   } else {
@@ -589,6 +586,9 @@ const checkIfLike = (likes, boulder, user) => {
 }
 
 const checkIfCompleted = (achievements, boulder, user) => {
+  console.log(achievements)
+  console.log(boulder.id)
+  console.log(user.id)
   if (
     achievements.filter(
       achievement => achievement.boulder.toString() === boulder.id && achievement.user.toString() === user.id
