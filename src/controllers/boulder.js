@@ -580,7 +580,8 @@ const checkIfItsMine = (boulder, userLoged) => {
 const checkIfLike = (likes, boulder, user) => {
   console.log(likes)
   console.log(boulder.id)
-  if (likes.filter(like => like.boulder.toString() === boulder.id && like.user.toString === user.id).length > 0) {
+  console.log(user.id)
+  if (likes.filter(like => like.boulder.toString() === boulder.id && like.user.toString() === user.id).length > 0) {
     return true
   } else {
     return false
@@ -590,7 +591,7 @@ const checkIfLike = (likes, boulder, user) => {
 const checkIfCompleted = (achievements, boulder, user) => {
   if (
     achievements.filter(
-      achievement => achievement.boulder.toString() === boulder.id && achievement.user.toString === user.id
+      achievement => achievement.boulder.toString() === boulder.id && achievement.user.toString() === user.id
     ).length > 0
   ) {
     return true
@@ -602,7 +603,7 @@ const checkIfCompleted = (achievements, boulder, user) => {
 const checkIfSaved = (boulderMarks, boulder, user) => {
   if (
     boulderMarks.filter(
-      boulderMark => boulderMark.boulder.toString() === boulder.id && boulderMark.user.toString === user.id
+      boulderMark => boulderMark.boulder.toString() === boulder.id && boulderMark.user.toString() === user.id
     ).length > 0
   ) {
     return true
