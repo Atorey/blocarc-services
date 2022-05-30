@@ -59,9 +59,9 @@ const findOne = (req, res) => {
               Achievement.find({ user: userFind }).then(achievements => {
                 BoulderMark.find({ user: userFind }).then(boulderMarks => {
                   result.mine = checkIfItsMine(result, userLoged)
-                  result.like = checkIfLike(likes, result)
-                  result.completed = checkIfCompleted(achievements, result)
-                  result.saved = checkIfSaved(boulderMarks, result)
+                  result.like = checkIfLike(likes, result, userFind)
+                  result.completed = checkIfCompleted(achievements, result, userFind)
+                  result.saved = checkIfSaved(boulderMarks, result, userFind)
 
                   if (result && !result.share && !result.mine) {
                     error403(res, 'This boulder is not being shared to the community')
@@ -223,6 +223,7 @@ const findAllLikes = (req, res) => {
                   }
                 })
                 .catch(err => {
+                  console.log('error')
                   error500(res, err)
                 })
             } else {
@@ -237,6 +238,7 @@ const findAllLikes = (req, res) => {
       }
     })
     .catch(err => {
+      console.log('error')
       error500(res, err)
     })
 }
@@ -575,24 +577,34 @@ const checkIfItsMine = (boulder, userLoged) => {
   }
 }
 
-const checkIfLike = (likes, boulder) => {
-  if (likes.filter(like => like.boulder.toString() === boulder.id).length > 0) {
+const checkIfLike = (likes, boulder, user) => {
+  console.log(likes)
+  console.log(boulder.id)
+  if (likes.filter(like => like.boulder.toString() === boulder.id && like.user.toString === user.id).length > 0) {
     return true
   } else {
     return false
   }
 }
 
-const checkIfCompleted = (achievements, boulder) => {
-  if (achievements.filter(achievement => achievement.boulder.toString() === boulder.id).length > 0) {
+const checkIfCompleted = (achievements, boulder, user) => {
+  if (
+    achievements.filter(
+      achievement => achievement.boulder.toString() === boulder.id && achievement.user.toString === user.id
+    ).length > 0
+  ) {
     return true
   } else {
     return false
   }
 }
 
-const checkIfSaved = (boulderMarks, boulder) => {
-  if (boulderMarks.filter(boulderMark => boulderMark.boulder.toString() === boulder.id).length > 0) {
+const checkIfSaved = (boulderMarks, boulder, user) => {
+  if (
+    boulderMarks.filter(
+      boulderMark => boulderMark.boulder.toString() === boulder.id && boulderMark.user.toString === user.id
+    ).length > 0
+  ) {
     return true
   } else {
     return false
