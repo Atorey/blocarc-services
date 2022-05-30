@@ -38,6 +38,24 @@ let pullUpSchema = new mongoose.Schema({
   },
 })
 
+let gradesSchema = new mongoose.Schema({
+  grade: {
+    type: String,
+  },
+  boulders: {
+    type: Number,
+  },
+})
+
+let goalSchema = new mongoose.Schema({
+  boulders: {
+    type: Number,
+  },
+  grades: {
+    type: [gradesSchema],
+  },
+})
+
 let userSchema = new mongoose.Schema({
   email: {
     type: String,
@@ -70,7 +88,7 @@ let userSchema = new mongoose.Schema({
     default: () => ({}),
   },
   goal: {
-    type: Number,
+    type: goalSchema,
   },
 })
 

@@ -17,14 +17,6 @@ mongoose.connect('mongodb+srv://atorey:Jk15wpoaq9c@cluster0.qxnl4.mongodb.net/te
 
 let app = express()
 
-// Add headers before the routes are defined
-/* app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*')
-  res.header('Access-Control-Allow-Methods', 'GET,HEAD,OPTIONS,POST,PUT')
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
-  next()
-}) */
-
 app.use(cors())
 app.use(express.json({ limit: '50mb' }))
 app.use(express.static('public'))
@@ -35,5 +27,5 @@ app.use('/users', users)
 app.use('/img/boulders', express.static('./public/img/boulders'))
 
 const PORT = 5000
-app.listen(process.env.PORT || PORT, () => console.log('run server ' + PORT))
+app.listen(process.env.PORT || PORT)
 /* app.listen(PORT) */

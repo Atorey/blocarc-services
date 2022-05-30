@@ -12,5 +12,6 @@ router.get('/:id', userController.findOne)
 
 router.put('/timer', userController.postTimer)
 router.put('/pull-ups', userController.postPullUps)
+router.put('/goal', userController.postGoal)
 
 module.exports = router

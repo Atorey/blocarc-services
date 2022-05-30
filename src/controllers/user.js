@@ -187,6 +187,37 @@ const postPullUps = (req, res) => {
     })
 }
 
+const postGoal = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        User.findByIdAndUpdate(
+          result.id,
+          {
+            $set: {
+              goal: req.body.goal,
+            },
+          },
+          { new: true }
+        )
+          .then(result => {
+            if (result) {
+              res.status(200).send()
+            } else {
+              error404(res, 'User not found')
+            }
+          })
+          .catch(err => error400(res, err))
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 module.exports = {
   findMe,
   findOne,
@@ -196,4 +227,5 @@ module.exports = {
   postTimer,
   getPullUps,
   postPullUps,
+  postGoal,
 }
