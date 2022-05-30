@@ -199,11 +199,11 @@ const findAllBouldersMarks = (req, res) => {
 }
 
 const findAllLikes = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   Boulder.find()
     .sort({ creationDate: -1 })
     .populate('creator')
     .then(result => {
-      const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
       if (result && result.length > 0) {
         User.findOne({ email: userLoged })
           .then(user => {
