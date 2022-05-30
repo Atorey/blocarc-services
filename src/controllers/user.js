@@ -46,11 +46,11 @@ const getAchievements = (req, res) => {
       if (result) {
         let firstDate = new Date(req.query.dateFirst)
         firstDate.setDate(firstDate.getDate())
-        firstDate = new Date(firstDate.setHours(23, 59, 59, 9999))
+        firstDate = new Date(firstDate.setHours(0, 0, 0, 0))
 
         let lastDate = new Date(req.query.dateLast)
         lastDate.setDate(lastDate.getDate())
-        lastDate = new Date(lastDate.setHours(23, 59, 59, 9999))
+        lastDate = new Date(lastDate.setHours(0, 0, 0, 0))
 
         Achievement.find({
           user: result,
