@@ -93,7 +93,7 @@ const findLastAchieved = (req, res) => {
           .populate('user')
           .then(result => {
             if (result) {
-              res.status(200).send({ achievements: result[0] })
+              res.status(200).send({ achievement: result[0] })
             } else {
               error404(res, 'Achievement not found')
             }
