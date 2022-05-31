@@ -80,6 +80,36 @@ const getAchievements = (req, res) => {
     })
 }
 
+const findLastAchieved = (req, res) => {
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  User.findOne({ email: userLoged })
+    .then(result => {
+      if (result) {
+        Achievement.find({
+          user: result,
+        })
+          .sort({ _id: -1 })
+          .populate('boulder')
+          .populate('user')
+          .then(result => {
+            if (result) {
+              res.status(200).send({ achievements: result[0] })
+            } else {
+              error404(res, 'Achievement not found')
+            }
+          })
+          .catch(() => {
+            error404(res, 'Achievement not found')
+          })
+      } else {
+        error404(res, 'User not found')
+      }
+    })
+    .catch(() => {
+      error404(res, 'User not found')
+    })
+}
+
 const getTimer = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
@@ -228,4 +258,5 @@ module.exports = {
   getPullUps,
   postPullUps,
   postGoal,
+  findLastAchieved,
 }
