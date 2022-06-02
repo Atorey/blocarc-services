@@ -1,7 +1,9 @@
 const fs = require('fs')
 const path = require('path')
+const sharp = require('sharp')
 
-const saveImage = (dir, image) => {
+const saveImage = async (dir, image) => {
+  await sharp(image).webp({ quality: 90 })
   const data = image.split(',')[1] || image
   const file = `${Date.now()}.webp`
   return new Promise((resolve, reject) => {
