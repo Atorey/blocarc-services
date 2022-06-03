@@ -632,84 +632,6 @@ const updateBoulderValoration = (boulder, numReps) => {
   })
 }
 
-const getComments = (req, res) => {
-  Boulder.findById(req.params['id'])
-    .then(result => {
-      if (result) {
-        res.status(200).send({ comments: result.comments })
-      } else {
-        error404(res, 'Boulder not found')
-      }
-    })
-    .catch(() => {
-      error404(res, 'Boulder not found')
-    })
-}
-
-const postComment = (req, res) => {
-  Boulder.findById(req.params['id'])
-    .then(result => {
-      if (result) {
-        Boulder.findByIdAndUpdate(
-          result.id,
-          {
-            $push: {
-              comments: [{ comment: req.body.comment }],
-            },
-          },
-          { new: true }
-        )
-          .then(result => {
-            res.status(200).send(result.comments[result.comments.length - 1])
-          })
-          .catch(err => {
-            error400(res, err)
-          })
-      } else {
-        error404(res, 'Boulder not found')
-      }
-    })
-    .catch(() => {
-      error404(res, 'Boulder not found')
-    })
-}
-
-const deleteComment = (req, res) => {
-  Boulder.findById(req.params['id'])
-    .then(result => {
-      if (!result) {
-        error404(res, 'Boulder not found')
-      }
-      //TODO: añadir a la condición si el usuario actual no es el autor del comentario. Por ejemplo: result.mine || result.comment.user === loguedUser
-      else if (!result.mine) {
-        error403(res, 'You are not authorized to delete this comment')
-      } else {
-        if (result.comments.some(comment => comment.id === req.params['comment'])) {
-          Boulder.updateOne(
-            result.id,
-            {
-              $pull: {
-                comments: { _id: req.params['comment'] },
-              },
-            },
-            { new: true }
-          )
-            .then(() => {
-              res.status(200).send()
-            })
-            .catch(err => {
-              error400(res, err)
-            })
-        } else {
-          error404(res, 'Comment not found')
-        }
-      }
-    })
-    .catch(() => {
-      error404(res, 'Boulder not found')
-    })
-}
-
 module.exports = {
   findAll,
   findOne,
@@ -727,7 +649,4 @@ module.exports = {
   removeLike,
   removeAchievement,
   removeBoulderMark,
-  getComments,
-  postComment,
-  deleteComment,
 }
