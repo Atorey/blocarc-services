@@ -223,7 +223,6 @@ const findAllLikes = (req, res) => {
                   }
                 })
                 .catch(err => {
-                  console.log('error')
                   error500(res, err)
                 })
             } else {
@@ -238,7 +237,6 @@ const findAllLikes = (req, res) => {
       }
     })
     .catch(err => {
-      console.log('error')
       error500(res, err)
     })
 }
@@ -311,7 +309,7 @@ const postAchievement = async (req, res) => {
                 .save()
                 .then(result => {
                   res.status(200).send({ achievement: result })
-                  updateBoulderValoration(result.boulder, 1)
+                  updateBoulder(result.boulder, 1)
                 })
                 .catch(err => {
                   error400(res, err)
@@ -518,7 +516,7 @@ const removeAchievement = (req, res) => {
             if (result) {
               Achievement.deleteOne({ boulder: result, user: user })
                 .then(() => {
-                  updateBoulderValoration(result, -1)
+                  updateBoulder(result, -1)
                   res.status(200).send()
                 })
                 .catch(err => {
@@ -586,9 +584,6 @@ const checkIfLike = (likes, boulder, user) => {
 }
 
 const checkIfCompleted = (achievements, boulder, user) => {
-  console.log(achievements)
-  console.log(boulder.id)
-  console.log(user.id)
   if (
     achievements.filter(
       achievement => achievement.boulder.toString() === boulder.id && achievement.user.toString() === user.id
@@ -612,19 +607,48 @@ const checkIfSaved = (boulderMarks, boulder, user) => {
   }
 }
 
-const updateBoulderValoration = (boulder, numReps) => {
+const updateBoulder = (boulder, numReps) => {
   Achievement.find({ boulder: boulder }).then(result => {
     let valorationSum = 0
+
+    const uniqueGrades = [...new Set(result.map(achievement => achievement.grade))]
+    if (!uniqueGrades.some(grade => grade === boulder.grade)) {
+      uniqueGrades.push(boulder.grade)
+    }
+
+    let grades = []
+    uniqueGrades.forEach(grade => {
+      const repetitions = result.filter(achievement => achievement.grade === grade)
+      if (boulder.grade === grade) {
+        repetitions.push([])
+      }
+      grades.push({
+        value: grade,
+        reps: repetitions.length,
+      })
+    })
+
+    let newGrade = grades.filter(
+      grade =>
+        grade.reps ===
+        Math.max.apply(
+          Math,
+          grades.map(grade => grade.reps)
+        )
+    )
+
     result.forEach(achievement => {
       valorationSum = valorationSum + achievement.valoration
     })
     let newValoration = valorationSum / result.length
-    Boulder.findOneAndUpdate(
-      { _id: boulder.id },
+
+    Boulder.findByIdAndUpdate(
+      boulder.id,
       {
         $inc: { reps: numReps },
         $set: {
           valoration: newValoration,
+          grade: newGrade.length > 1 ? undefined : newGrade[0].value,
         },
       },
       { upsert: true }

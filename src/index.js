@@ -27,6 +27,6 @@ app.use('/users', users)
 app.use('/img/boulders', express.static('./public/img/boulders'))
 
 const PORT = 5000
-app.listen(process.env.PORT || PORT)
-/* app.listen(PORT) */
+/* app.listen(process.env.PORT || PORT) */
+app.listen(PORT)
 
