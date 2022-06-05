@@ -547,6 +547,9 @@ const remove = (req, res) => {
           if (!result.share) {
             Boulder.deleteOne({ _id: result.id })
               .then(() => {
+                Like.deleteMany({ boulder: result }).exec()
+                BoulderMark.deleteMany({ boulder: result }).exec()
+                Achievement.deleteMany({ boulder: result }).exec()
                 res.status(200).send()
               })
               .catch(err => {
@@ -638,7 +641,9 @@ const updateBoulder = (boulder, numReps) => {
     )
 
     result.forEach(achievement => {
-      valorationSum = valorationSum + achievement.valoration
+      if (achievement.valoration !== 0) {
+        valorationSum = valorationSum + achievement.valoration
+      }
     })
     let newValoration = valorationSum / result.length
 
