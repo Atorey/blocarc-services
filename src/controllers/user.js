@@ -253,27 +253,27 @@ const update = async (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   let regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
 
+  console.log(req.body.password)
   if (!req.body.password || regex.test(req.body.password)) {
     User.findOne({ email: userLoged })
       .then(async result => {
         if (!result) {
           error404(res, 'User not found')
         } else {
-          console.log(sha256(req.body.password).toString())
           User.findByIdAndUpdate(
             result.id,
             {
               $set: {
                 email: req.body.email,
                 username: req.body.username,
-                password: sha256(req.body.password).toString(),
+                password: req.body.password ? sha256(req.body.password).toString() : undefined,
                 avatar: avatarURL,
               },
             },
             { new: true }
           )
             .then(result => {
-              res.status(200).send({ boulder: result })
+              res.status(200).send({ user: result })
             })
             .catch(err => {
               if (avatarURL) {
