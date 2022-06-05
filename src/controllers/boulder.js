@@ -254,7 +254,7 @@ const create = async (req, res) => {
           grade: req.body.grade,
           wall: req.body.wall,
           share: req.body.share,
-          image: imageUrl,
+          image: req.body.image,
           creationDate: req.body.creationDate,
           creator: creator,
           mine: req.body.mine,
