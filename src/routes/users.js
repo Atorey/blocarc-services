@@ -14,5 +14,7 @@ router.get('/:id', protectRoute, userController.findOne)
 router.put('/timer', protectRoute, userController.postTimer)
 router.put('/pull-ups', protectRoute, userController.postPullUps)
 router.put('/goal', protectRoute, userController.postGoal)
+router.put('/me', protectRoute, userController.update)
+
 
 module.exports = router

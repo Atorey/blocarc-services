@@ -1,12 +1,12 @@
 const jwt = require('jsonwebtoken')
+const fs = require('fs')
 
 const User = require('../models/user.js')
 const Achievement = require('../models/achievement.js')
+const sha256 = require('crypto-js/sha256')
 
 const { error404, error400 } = require('../utils/errors')
-
-//TODO: Crear función que cambie el atributo 'mine' de boulder en el caso de que el creador coincida con el usuario logeado
-//TODO: Crear servicio GET /boulders?creator={id} para obetener los bloques de un creador
+const saveImage = require('../utils/uploadImage')
 
 const findMe = (req, res) => {
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
@@ -248,6 +248,49 @@ const postGoal = (req, res) => {
     })
 }
 
+const update = async (req, res) => {
+  const avatarURL = req.body.avatar ? await saveImage('users', req.body.avatar) : undefined
+  const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
+  let regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/
+
+  if (!req.body.password || regex.test(req.body.password)) {
+    User.findOne({ email: userLoged })
+      .then(async result => {
+        if (!result) {
+          error404(res, 'User not found')
+        } else {
+          console.log(sha256(req.body.password).toString())
+          User.findByIdAndUpdate(
+            result.id,
+            {
+              $set: {
+                email: req.body.email,
+                username: req.body.username,
+                password: sha256(req.body.password).toString(),
+                avatar: avatarURL,
+              },
+            },
+            { new: true }
+          )
+            .then(result => {
+              res.status(200).send({ boulder: result })
+            })
+            .catch(err => {
+              if (avatarURL) {
+                fs.unlinkSync('./public/' + avatarURL)
+              }
+              error400(res, err)
+            })
+        }
+      })
+      .catch(() => {
+        error404(res, 'Boulder not found')
+      })
+  } else {
+    error400(res, { message: 'Invalid password' })
+  }
+}
+
 module.exports = {
   findMe,
   findOne,
@@ -259,4 +302,5 @@ module.exports = {
   postPullUps,
   postGoal,
   findLastAchieved,
+  update,
 }
