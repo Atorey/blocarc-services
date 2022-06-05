@@ -1,4 +1,3 @@
-const fs = require('fs')
 const jwt = require('jsonwebtoken')
 
 const Boulder = require('../models/boulder.js')
@@ -8,7 +7,6 @@ const Like = require('../models/like.js')
 const BoulderMark = require('../models/bouldermark.js')
 
 const { error400, error403, error404, error500 } = require('../utils/errors')
-const saveImage = require('../utils/uploadImage')
 
 const findAll = (req, res) => {
   if (req.query.creator) {
@@ -242,7 +240,7 @@ const findAllLikes = (req, res) => {
 }
 
 const create = async (req, res) => {
-  const imageUrl = await saveImage('boulders', req.body.image)
+  /* const imageUrl = await saveImage('boulders', req.body.image) */
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
     .then(result => {
@@ -267,7 +265,7 @@ const create = async (req, res) => {
             res.status(200).send({ boulder: result })
           })
           .catch(err => {
-            fs.unlinkSync('./public/' + imageUrl)
+            /* fs.unlinkSync('./public/' + imageUrl) */
             error400(res, err)
           })
       } else {
