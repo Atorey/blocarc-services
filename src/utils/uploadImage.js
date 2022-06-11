@@ -8,7 +8,7 @@ const saveImage = async (dir, image) => {
   const ref = path.join('public/img', dir, file)
   const buffer = Buffer.from(data, 'base64')
 
-  await sharp(buffer).webp({ quality: 60 }).toFile(ref)
+  await sharp(buffer).webp({ quality: 50 }).toFile(ref)
   return `img/${dir}/${file}`
 }
 
