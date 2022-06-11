@@ -21,20 +21,6 @@ const login = (req, res) => {
     })
 }
 
-const google = (req, res) => {
-  User.findOne({ username: req.body.username })
-    .then(user => {
-      if (user) {
-        res.send({ accessToken: Token.generate(user.email) })
-      } else {
-        error401(res, 'Email or password incorrect')
-      }
-    })
-    .catch(err => {
-      error500(res, err)
-    })
-}
-
 const register = (req, res) => {
   let regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/ //Mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial
   if (regex.test(req.body.password)) {
@@ -81,8 +67,6 @@ const validate = (req, res) => {
 
 module.exports = {
   login,
-  /* facebook, */
-  google,
   register,
   validate,
 }

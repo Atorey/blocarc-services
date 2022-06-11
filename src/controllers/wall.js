@@ -4,9 +4,6 @@ const Wall = require('../models/wall.js')
 const { error400, error404, error500 } = require('../utils/errors')
 const saveImage = require('../utils/uploadImage')
 
-//TODO: Crear función que cambie el atributo 'mine' de wall en el caso de que el creador coincida con el usuario logeado
-//TODO: Crear servicio GET /boulders?creator={id} para obetener los bloques de un creador
-
 const findAll = (req, res) => {
   Wall.find()
     .then(result => {

@@ -240,7 +240,6 @@ const findAllLikes = (req, res) => {
 }
 
 const create = async (req, res) => {
-  /* const imageUrl = await saveImage('boulders', req.body.image) */
   const userLoged = jwt.decode(req.headers['authorization'].substring(7)).login
   User.findOne({ email: userLoged })
     .then(result => {
@@ -265,7 +264,6 @@ const create = async (req, res) => {
             res.status(200).send({ boulder: result })
           })
           .catch(err => {
-            /* fs.unlinkSync('./public/' + imageUrl) */
             error400(res, err)
           })
       } else {
